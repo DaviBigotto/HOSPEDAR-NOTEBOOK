@@ -1,0 +1,15 @@
+@import "tailwindcss";
+
+@theme {
+  --color-gold: #bda26b;
+  --color-gold-dark: #8c7340;
+  --color-dark: #1f1b18;
+  --color-dark-lighter: #2d2621;
+}
+
+@layer base {
+  body {
+    background-color: #faf9f7; /* Soft stone/warm white background */
+    color: #2d2621;
+  }
+}

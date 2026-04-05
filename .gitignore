@@ -29,6 +29,19 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+*.log
+stderr.txt
+stdout.txt
+
+# tests and scratch files
+test-*.js
+test-*.html
+test.html
+test_out.txt
+test_scraper.js
+save_network.js
+save_network2.js
+all_payloads.log
 
 # env files (can opt-in for committing if needed)
 .env*
