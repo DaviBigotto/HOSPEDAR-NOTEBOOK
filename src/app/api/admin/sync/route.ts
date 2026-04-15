@@ -1,6 +1,12 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+};
+
 // Bypass SSL certificate errors from Vendizap in dev
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
@@ -162,9 +168,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ 
         success: true, 
         message: `Sincronização completa concluída! ${syncedCount} produtos processados.` 
-    });
+    }, { headers: corsHeaders });
   } catch (error) {
     console.error("Sync Error: ", error);
-    return NextResponse.json({ error: 'Internal Server Error during Sync' }, { status: 500 });
+    return NextResponse.json({ error: 'Internal Server Error during Sync' }, { status: 500, headers: corsHeaders });
   }
 }

@@ -1,6 +1,12 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+};
+
 export async function OPTIONS() {
   return new NextResponse(null, {
     status: 200,
@@ -17,9 +23,9 @@ export async function GET() {
     const products = await prisma.product.findMany({
       orderBy: { nome: 'asc' }
     });
-    return NextResponse.json(products);
+    return NextResponse.json(products, { headers: corsHeaders });
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to fetch products' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to fetch products' }, { status: 500, headers: corsHeaders });
   }
 }
 
@@ -46,10 +52,10 @@ export async function POST(req: Request) {
       }
     });
 
-    return NextResponse.json(newProduct);
+    return NextResponse.json(newProduct, { headers: corsHeaders });
   } catch (error) {
     console.error(error);
-    return NextResponse.json({ error: 'Failed to create product' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to create product' }, { status: 500, headers: corsHeaders });
   }
 }
 
@@ -77,10 +83,10 @@ export async function PUT(req: Request) {
       }
     });
 
-    return NextResponse.json(updatedProduct);
+    return NextResponse.json(updatedProduct, { headers: corsHeaders });
   } catch (error) {
     console.error(error);
-    return NextResponse.json({ error: 'Failed to update product' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to update product' }, { status: 500, headers: corsHeaders });
   }
 }
 
@@ -97,10 +103,10 @@ export async function DELETE(req: Request) {
       where: { id }
     });
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true }, { headers: corsHeaders });
   } catch (error) {
     console.error(error);
-    return NextResponse.json({ error: 'Failed to delete product' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to delete product' }, { status: 500, headers: corsHeaders });
   }
 }
 
