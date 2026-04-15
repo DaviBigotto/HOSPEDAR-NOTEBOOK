@@ -56,33 +56,35 @@ export default async function ProdutoPage({ params }: { params: Promise<{ id: st
     <div className="min-h-screen bg-[#fafafa]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-24">
         
-        {/* Breadcrumb */}
-        <nav className="flex text-[10px] text-stone-400 mb-12 uppercase tracking-[0.2em] font-bold">
+        {/* Breadcrumb - Compact on Mobile */}
+        <nav className="flex text-[10px] text-stone-400 mb-6 md:mb-12 uppercase tracking-[0.2em] font-bold overflow-x-auto whitespace-nowrap pb-2 scrollbar-hide">
           <Link href="/" className="hover:text-[#d4af37] transition-colors">Início</Link>
-          <span className="mx-3 opacity-30">/</span>
+          <span className="mx-2 md:mx-3 opacity-30">/</span>
           <Link href="/importados" className="hover:text-[#d4af37] transition-colors">{product.categoria}</Link>
-          <span className="mx-3 opacity-30">/</span>
-          <span className="text-stone-900 truncate max-w-[200px]">{product.nome}</span>
+          <span className="mx-2 md:mx-3 opacity-30">/</span>
+          <span className="text-stone-900 truncate max-w-[150px] md:max-w-[200px]">{product.nome}</span>
         </nav>
 
-        <div className="flex flex-col lg:flex-row gap-16 lg:gap-32">
+        <div className="flex flex-col lg:flex-row gap-8 lg:gap-32">
           
-          {/* Produto Imagem */}
           <div className="w-full lg:w-1/2">
             <div className="sticky top-32">
-              <div className="relative aspect-[4/5] bg-white rounded-sm overflow-hidden border border-stone-100 shadow-2xl flex items-center justify-center p-12 group">
+              <div className="relative aspect-[4/5] bg-white rounded-sm overflow-hidden border border-stone-100 shadow-2xl flex items-center justify-center p-6 md:p-12 group">
                 {product.imagem_url ? (
-                  <img 
+                  <Image 
                     src={product.imagem_url} 
                     alt={product.nome} 
-                    className="w-full h-full object-contain mix-blend-darken scale-100 group-hover:scale-110 transition-transform duration-1000 ease-out"
+                    fill
+                    sizes="(max-width: 768px) 100vw, 50vw"
+                    priority
+                    className="object-contain mix-blend-darken scale-100 group-hover:scale-105 transition-transform duration-1000 ease-out p-4 md:p-8"
                   />
                 ) : (
                   <span className="text-stone-200 tracking-[0.3em] uppercase text-xs font-light font-serif">Sem Imagem</span>
                 )}
                 
                 {product.is_promocao && (
-                  <span className="absolute top-8 left-8 bg-stone-900 text-[#d4af37] text-[10px] px-4 py-2 rounded-sm uppercase tracking-[0.2em] font-bold shadow-2xl">Oferta Exclusiva</span>
+                  <span className="absolute top-4 left-4 md:top-8 md:left-8 bg-stone-900 text-[#d4af37] text-[8px] md:text-[10px] px-3 py-1.5 md:px-4 md:py-2 rounded-sm uppercase tracking-[0.2em] font-bold shadow-2xl z-10">Oferta Exclusiva</span>
                 )}
               </div>
             </div>
@@ -126,6 +128,10 @@ export default async function ProdutoPage({ params }: { params: Promise<{ id: st
                 <p className="text-xs text-stone-500 mt-4 font-medium uppercase tracking-widest">
                   ou 12x de <span className="text-stone-900 font-bold">R$ {(product.preco_venda / 12).toFixed(2).replace('.', ',')}</span> sem juros
                 </p>
+              </div>
+
+              <div className="mb-10">
+                <ProductActions product={product} />
               </div>
 
               <div className="flex items-center gap-3 mb-2">
@@ -185,9 +191,7 @@ export default async function ProdutoPage({ params }: { params: Promise<{ id: st
               </div>
             </div>
 
-            <div className="mt-auto pt-10 border-t border-stone-100">
-              <ProductActions product={product} />
-            </div>
+
           </div>
         </div>
       </div>

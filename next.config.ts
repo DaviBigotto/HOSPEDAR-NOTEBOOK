@@ -13,7 +13,19 @@ const nextConfig: NextConfig = {
         ]
       }
     ]
-  }
+  },
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'cdn.vendizap.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'bigot-parfums.vercel.app',
+      }
+    ],
+  },
 };
 
 export default nextConfig;

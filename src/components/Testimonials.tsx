@@ -8,7 +8,7 @@ export default function Testimonials() {
   ];
 
   return (
-    <section className="bg-[#030303] py-24 relative overflow-hidden">
+    <section className="bg-[#030303] py-12 md:py-24 relative overflow-hidden">
       {/* Decorative large quotes */}
       <div className="absolute top-10 left-10 text-[20rem] text-stone-900/40 font-serif leading-none select-none pointer-events-none">&ldquo;</div>
 

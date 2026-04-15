@@ -61,10 +61,10 @@ export default async function Home() {
       <TrustBar />
 
       {/* Destaques Section */}
-      <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+      <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-24">
         <div className="flex flex-col items-center mb-16 text-center">
           <span className="text-[#d4af37] text-xs font-bold tracking-[0.2em] uppercase mb-4 block">Desejados</span>
-          <h2 className="text-3xl md:text-5xl font-serif text-stone-900 mb-4 tracking-wide">Destaques da Maison</h2>
+          <h2 className="text-4xl md:text-6xl font-serif text-stone-900 mb-4 tracking-tight">Destaques da Maison</h2>
           <p className="text-stone-500 font-light text-sm md:text-base max-w-lg">Nossa seleção minuciosa das fragrâncias de assinatura mais cobiçadas.</p>
         </div>
         
@@ -73,7 +73,7 @@ export default async function Home() {
             <p className="text-stone-500">Nenhum produto publicado no site ainda. Em breve teremos novidades!</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-4">
             {destaques.map((prod) => (
               <ProductCard key={prod.id} product={prod} />
             ))}

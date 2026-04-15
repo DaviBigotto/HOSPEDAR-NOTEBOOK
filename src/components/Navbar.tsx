@@ -51,7 +51,7 @@ export default function Navbar() {
               {/* Cart Button */}
               <button 
                 onClick={toggleCart}
-                className="ml-4 relative text-gray-200 hover:text-gold transition-colors flex items-center justify-center p-2"
+                className="ml-4 relative text-gray-200 hover:text-gold transition-colors flex items-center justify-center p-3"
               >
                 <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
@@ -70,7 +70,7 @@ export default function Navbar() {
               
               <button 
                 onClick={toggleCart}
-                className="relative text-gray-200 hover:text-gold transition-colors flex items-center justify-center p-2 mr-1"
+                className="relative text-gray-200 hover:text-gold transition-colors flex items-center justify-center p-3 mr-1"
               >
                 <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
@@ -85,7 +85,7 @@ export default function Navbar() {
               {/* Hamburger Button */}
               <button 
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="text-gray-200 hover:text-gold transition-colors p-2"
+                className="text-gray-200 hover:text-gold transition-colors p-3"
               >
                 <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   {isMobileMenuOpen ? (

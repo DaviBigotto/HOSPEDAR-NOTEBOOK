@@ -5,12 +5,13 @@ export default function LuxuryCategories() {
     { title: "Masculinos", subtitle: "Presença Forte", href: "/importados", colSpan: "col-span-12 md:col-span-6 lg:col-span-4", bgId: 1 },
     { title: "Femininos", subtitle: "Elegância Delicada", href: "/importados", colSpan: "col-span-12 md:col-span-6 lg:col-span-4", bgId: 2 },
     { title: "Body Splash", subtitle: "Victoria's Secret", href: "/victoria-secret", colSpan: "col-span-12 md:col-span-12 lg:col-span-4", bgId: 3 },
-    { title: "Testers", subtitle: "Aroma Original", href: "/testers", colSpan: "col-span-12 md:col-span-6", bgId: 4 },
-    { title: "Exclusivos", subtitle: "Edições Limitadas", href: "/importados", colSpan: "col-span-12 md:col-span-6", bgId: 5 },
+    { title: "Testers", subtitle: "Aroma Original", href: "/testers", colSpan: "col-span-12 md:col-span-6 lg:col-span-4", bgId: 4 },
+    { title: "Hidratantes", subtitle: "Toque de Seda", href: "/cremes", colSpan: "col-span-12 md:col-span-6 lg:col-span-4", bgId: 6 },
+    { title: "Exclusivos", subtitle: "Edições Limitadas", href: "/importados", colSpan: "col-span-12 md:col-span-12 lg:col-span-4", bgId: 5 },
   ];
 
   return (
-    <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+    <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-24">
       <div className="flex flex-col items-center mb-16 text-center">
         <span className="w-10 h-0.5 bg-[#d4af37] mb-6"></span>
         <h2 className="text-3xl md:text-5xl font-serif text-stone-900 mb-4 tracking-wide">Coleções</h2>
@@ -27,6 +28,7 @@ export default function LuxuryCategories() {
                                cat.bgId === 2 ? 'linear-gradient(to bottom right, #2a2022, #111)' :
                                cat.bgId === 3 ? 'linear-gradient(to bottom right, #331520, #0a0508)' :
                                cat.bgId === 4 ? 'linear-gradient(to bottom right, #1a1f18, #000)' :
+                               cat.bgId === 6 ? 'linear-gradient(to bottom right, #2a221a, #0a0805)' :
                                'linear-gradient(to bottom right, #2c2512, #050505)'
                  }}>
                {/* Decorative noise/texture could go here via pseudo-element/CSS if available */}
