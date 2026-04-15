@@ -5,6 +5,8 @@ import { notFound } from 'next/navigation';
 import ProductActions from '@/components/ProductActions';
 import { Sparkles, Wind, Clock, Calendar, Bookmark, Map } from 'lucide-react';
 
+export const dynamic = 'force-dynamic';
+
 export default async function ProdutoPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
   const product = await prisma.product.findUnique({

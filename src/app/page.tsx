@@ -7,6 +7,8 @@ import HighlightBanner from '@/components/HighlightBanner';
 import WhyBigot from '@/components/WhyBigot';
 import Testimonials from '@/components/Testimonials';
 
+export const dynamic = 'force-dynamic';
+
 export default async function Home() {
   const destaques = await prisma.product.findMany({
     where: {
