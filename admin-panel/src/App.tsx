@@ -120,20 +120,27 @@ function App() {
   };
 
   const handleUpdate = async (id: string, field: Partial<Product>) => {
-    try {
-      // Normalize categoria to fix typos like "Árables"
-      if (field.categoria) {
-        field.categoria = field.categoria.replace(/Árables/gi, 'Arabe').replace(/Arables/gi, 'Arabe');
-      }
+    // Prepare sanitized field (normalize typos like "Árables")
+    const sanitizedField = { ...field };
+    if (sanitizedField.categoria) {
+      sanitizedField.categoria = sanitizedField.categoria.replace(/Árables/gi, 'Arabe').replace(/Arables/gi, 'Arabe');
+    }
 
+    // Update local state immediately (Optimistically) for instant feedback
+    setProducts(prev => prev.map(p => p.id === id ? { ...p, ...sanitizedField } : p));
+
+    try {
+      // Background update to the server
       await fetch(`${API_BASE}/products`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, ...field })
+        body: JSON.stringify({ id, ...sanitizedField })
       });
-      fetchProducts();
+      // No re-fetch needed if successful, state is already updated!
     } catch (error) {
       console.error("Error updating product:", error);
+      // If server update fails, re-fetch the correct state from the server
+      fetchProducts();
     }
   };
 
