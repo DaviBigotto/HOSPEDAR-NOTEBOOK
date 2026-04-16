@@ -24,12 +24,10 @@ export default function ProductCard({ product }: { product: any }) {
   // Helper to split name into Parts
   const parseProductName = (fullName: string) => {
     const volumeRegex = /(\d+\s?ml|\d+\s?g|\d+\s?oz)/i;
-    const volumeMatch = fullName.match(volumeRegex);
-    const volume = volumeMatch ? volumeMatch[0] : '';
-    let nameWithoutVolume = fullName.replace(volumeRegex, '').trim();
+    const nameWithoutVolume = fullName.replace(volumeRegex, '').trim();
 
     return {
-      mainName: formatTitle(nameWithoutVolume.split('-')[0].trim()),
+      mainName: formatTitle(nameWithoutVolume),
     };
   };
 

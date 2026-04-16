@@ -48,7 +48,7 @@ export default async function ProdutoPage({ params }: { params: Promise<{ id: st
     
     return {
       topLabel: brand.toUpperCase(),
-      mainName: formatTitle(nameWithoutVolume.split('-')[0].trim()),
+      mainName: formatTitle(nameWithoutVolume),
       bottomLabel: volume.toUpperCase()
     };
   };
