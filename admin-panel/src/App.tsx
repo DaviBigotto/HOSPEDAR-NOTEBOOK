@@ -1,4 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, memo } from 'react'
+import { 
+  Search, Plus, RefreshCw, Moon, Sun, 
+  Trash2, Globe, Database, Package, 
+  ChevronRight, AlertCircle, ShoppingCart, 
+  Droplet, Tag, CheckCircle2, XCircle, LayoutGrid, List
+} from 'lucide-react'
 
 interface Product {
   id: string;
@@ -33,38 +39,216 @@ const AVAILABLE_CATEGORIES = [
 
 const COMMON_VOLUMES = ['30ML', '50ML', '75ML', '100ML', '200ML'];
 
-function App() {
+// --- Sub-Components ---
+
+const PriceInput = memo(({ value, onChange }: { value: number, onChange: (val: number) => void }) => (
+  <div className="group relative flex items-center bg-stone-100 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-lg px-3 py-2 transition-all focus-within:ring-2 focus-within:ring-[#cfa858] focus-within:border-transparent">
+    <span className="text-stone-400 text-xs font-bold mr-2">R$</span>
+    <input
+      type="number"
+      step="0.01"
+      className="bg-transparent font-sans font-bold text-stone-900 dark:text-stone-100 outline-none text-base w-24"
+      value={value}
+      onChange={e => onChange(parseFloat(e.target.value) || 0)}
+    />
+    <div className="absolute -top-2 left-3 bg-[#cfa858] text-[8px] font-black text-white px-1.5 rounded uppercase tracking-tighter opacity-0 group-focus-within:opacity-100 transition-opacity">Preço Pix</div>
+  </div>
+));
+
+const StatusToggle = memo(({ active, onChange }: { active: boolean, onChange: (val: boolean) => void }) => (
+  <button 
+    onClick={() => onChange(!active)}
+    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ring-offset-2 ring-offset-white dark:ring-offset-black focus:ring-2 focus:ring-[#cfa858] ${active ? 'bg-[#cfa858]' : 'bg-stone-200 dark:bg-stone-800'}`}
+  >
+    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${active ? 'translate-x-6' : 'translate-x-1'}`} />
+  </button>
+));
+
+const ProductCard = memo(({ product, onUpdate, onDelete }: { 
+  product: Product, 
+  onUpdate: (id: string, field: Partial<Product>) => void,
+  onDelete: (id: string, name: string) => void 
+}) => {
+  const isError = product.preco_venda === 0 || product.estoque === 0;
+
+  return (
+    <div className={`group relative bg-white dark:bg-[#1a1a1a] p-4 md:p-6 rounded-2xl border transition-all duration-300 hover:shadow-xl ${isError ? 'border-rose-200 dark:border-rose-900/30' : 'border-stone-100 dark:border-stone-800'}`}>
+      {/* Visual Indicator of Error */}
+      {isError && (
+        <div className="absolute -top-2 -right-2 bg-rose-500 text-white p-1 rounded-full shadow-lg z-10 animate-bounce">
+          <AlertCircle size={14} />
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+        
+        {/* IDENTITY ZONE (Left) */}
+        <div className="lg:col-span-5 flex items-start gap-4">
+          <div className="relative w-20 h-24 md:w-24 md:h-28 bg-stone-50 dark:bg-stone-900 rounded-xl overflow-hidden border border-stone-100 dark:border-stone-800 shrink-0 flex items-center justify-center group/img">
+            {product.imagem_url ? (
+              <img src={product.imagem_url} alt={product.nome} className="w-full h-full object-contain mix-blend-multiply dark:mix-blend-normal transition-transform duration-500 group-hover/img:scale-110 p-2" />
+            ) : (
+              <div className="text-[10px] text-stone-300 uppercase tracking-widest font-bold">No Img</div>
+            )}
+            <div className="absolute top-0 left-0 bg-stone-800/80 text-white text-[8px] px-1.5 py-0.5 rounded-br-lg font-black tracking-tighter">
+              {product.external_id ? 'VENDIZAP' : 'MANUAL'}
+            </div>
+          </div>
+          
+          <div className="flex-1 min-w-0 space-y-3">
+            <input 
+              className="text-lg md:text-xl font-bold text-stone-900 dark:text-white bg-transparent border-b border-transparent hover:border-[#cfa858]/30 focus:border-[#cfa858] outline-none w-full transition-all truncate"
+              defaultValue={product.nome}
+              onBlur={(e) => e.target.value !== product.nome && onUpdate(product.id, { nome: e.target.value.trim() })}
+            />
+            
+            <div className="flex flex-wrap gap-1.5 pt-1">
+              {AVAILABLE_CATEGORIES.map(cat => (
+                <button
+                  key={cat.id}
+                  onClick={() => {
+                    const currentCats = (product.categoria || '').split(';').filter(Boolean).map(c => c.trim());
+                    const cleanedCats = currentCats.map(c => (c.toLowerCase().includes('arable') ? 'Arabe' : c));
+                    const filteredCats = cleanedCats.filter(c => AVAILABLE_CATEGORIES.some(ac => ac.id === c) || c === cat.id);
+                    const newCats = filteredCats.includes(cat.id) ? filteredCats.filter(c => c !== cat.id) : [...filteredCats, cat.id];
+                    onUpdate(product.id, { categoria: [...new Set(newCats)].join(';') });
+                  }}
+                  className={`text-[9px] px-2 py-1 rounded-md font-black uppercase tracking-widest transition-all border ${
+                    (product.categoria || '').split(';').some(c => c.trim() === cat.id)
+                      ? 'bg-[#cfa858] text-white border-[#cfa858] shadow-md shadow-[#cfa858]/20'
+                      : 'bg-stone-50 dark:bg-stone-900 text-stone-400 border-stone-200 dark:border-stone-800 hover:border-[#cfa858]/50'
+                  }`}
+                >
+                  {cat.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-3 pt-1">
+               <select
+                 className="text-[10px] text-stone-500 font-bold uppercase bg-stone-100 dark:bg-stone-900 rounded-md px-2 py-1 outline-none border border-stone-200 dark:border-stone-800 focus:border-[#cfa858]"
+                 value={product.classificacao || 'Unissex'}
+                 onChange={(e) => onUpdate(product.id, { classificacao: e.target.value })}
+               >
+                 <option value="Unissex">UNISSEX</option>
+                 <option value="Masculino">MASCULINO</option>
+                 <option value="Feminino">FEMININO</option>
+               </select>
+               <span className="text-[9px] text-stone-300 font-bold uppercase tracking-widest">Gênero</span>
+            </div>
+          </div>
+        </div>
+
+        {/* TECHNICAL ZONE (Center) */}
+        <div className="lg:col-span-4 grid grid-cols-1 sm:grid-cols-2 gap-4 border-l border-r border-stone-100 dark:border-stone-800 px-0 lg:px-6">
+          <div className="space-y-4">
+            <div>
+              <label className="text-[9px] font-black text-stone-400 uppercase tracking-widest block mb-1.5">Volumetria</label>
+              <div className="flex items-center gap-2">
+                 <input 
+                   className="font-mono text-sm font-bold text-stone-900 dark:text-stone-100 bg-stone-100 dark:bg-stone-900 px-3 py-1.5 rounded-lg border border-stone-200 dark:border-stone-800 focus:border-[#cfa858] outline-none w-20"
+                   value={product.volumetria || ''}
+                   onChange={(e) => onUpdate(product.id, { volumetria: e.target.value })}
+                 />
+              </div>
+              <div className="flex flex-wrap gap-1 mt-2">
+                {COMMON_VOLUMES.map(v => (
+                  <button 
+                    key={v}
+                    onClick={() => onUpdate(product.id, { volumetria: v })}
+                    className={`text-[8px] px-1.5 py-0.5 rounded border transition-all ${product.volumetria === v ? 'bg-[#cfa858] text-white border-[#cfa858]' : 'bg-white dark:bg-stone-900 text-stone-400 border-stone-100 dark:border-stone-800'}`}
+                  >
+                    {v}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <label className="text-[9px] font-black text-stone-400 uppercase tracking-widest block mb-1.5">Estoque</label>
+              <div className="flex items-center gap-2">
+                 <div className="p-1.5 bg-stone-100 dark:bg-stone-900 rounded-lg">
+                    <Package size={14} className={product.estoque === 0 ? 'text-rose-500' : 'text-stone-400'} />
+                 </div>
+                 <input 
+                   type="number"
+                   className={`font-mono text-sm font-bold bg-transparent border-b border-transparent focus:border-[#cfa858] outline-none w-16 ${product.estoque === 0 ? 'text-rose-500' : 'text-stone-900 dark:text-stone-100'}`}
+                   defaultValue={product.estoque}
+                   onBlur={(e) => onUpdate(product.id, { estoque: parseInt(e.target.value) || 0 })}
+                 />
+              </div>
+            </div>
+            <div>
+              <label className="text-[9px] font-black text-stone-400 uppercase tracking-widest block mb-1.5">Custo Ref.</label>
+              <div className="flex items-center gap-2">
+                 <div className="p-1.5 bg-stone-100 dark:bg-stone-900 rounded-lg">
+                    <Database size={14} className="text-stone-400" />
+                 </div>
+                 <span className="font-mono text-sm font-bold text-stone-900 dark:text-stone-100">
+                   R$ {product.preco_custo.toFixed(2).replace('.', ',')}
+                 </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* FINANCIAL ZONE (Right) */}
+        <div className="lg:col-span-3 flex lg:flex-col items-center lg:items-end justify-between lg:justify-center gap-4">
+           <div className="flex flex-col items-end gap-2">
+              <label className="text-[9px] font-black text-stone-400 uppercase tracking-widest block">Edição de Preço</label>
+              <PriceInput value={product.preco_venda} onChange={(val) => onUpdate(product.id, { preco_venda: val })} />
+              {product.preco_venda === 0 && <span className="text-[9px] font-bold text-rose-500 animate-pulse">Preço Pendente!</span>}
+           </div>
+           
+           <div className="flex items-center gap-6">
+              <div className="flex flex-col items-center gap-1">
+                <StatusToggle active={product.publicar_no_site} onChange={(val) => onUpdate(product.id, { publicar_no_site: val })} />
+                <span className={`text-[9px] font-black tracking-widest ${product.publicar_no_site ? 'text-[#cfa858]' : 'text-stone-400'}`}>
+                  {product.publicar_no_site ? 'ONLINE' : 'OFFLINE'}
+                </span>
+              </div>
+
+              <button 
+                onClick={() => onDelete(product.id, product.nome)}
+                className="p-2.5 rounded-lg border border-stone-100 dark:border-stone-800 text-stone-300 hover:border-rose-100 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/10 transition-all group/del"
+              >
+                <Trash2 size={18} className="group-hover/del:scale-110 transition-transform" />
+              </button>
+           </div>
+        </div>
+      </div>
+    </div>
+  );
+});
+
+// --- Main Application ---
+
+export default function App() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [search, setSearch] = useState("");
+  const [darkMode, setDarkMode] = useState(() => localStorage.getItem('admin-theme') === 'dark');
   
   // Registration Form State
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({
-    nome: "",
-    categoria: "Importado",
-    preco_custo: 0,
-    preco_venda: 0,
-    imagem_url: "",
-    volumetria: ""
+    nome: "", categoria: "Importado", preco_custo: 0, preco_venda: 0, imagem_url: "", volumetria: ""
   });
 
-  const toggleCategoryInForm = (catId: string) => {
-    const currentCats = (formData.categoria || '').split(';').filter(Boolean);
-    const newCats = currentCats.includes(catId)
-      ? currentCats.filter(c => c !== catId)
-      : [...currentCats, catId];
-    setFormData({ ...formData, categoria: newCats.join(';') });
-  };
+  useEffect(() => {
+    localStorage.setItem('admin-theme', darkMode ? 'dark' : 'light');
+    if (darkMode) document.documentElement.classList.add('dark');
+    else document.documentElement.classList.remove('dark');
+  }, [darkMode]);
 
   const fetchProducts = async () => {
     setLoading(true);
     try {
       const res = await fetch(`${API_BASE}/products`);
-      if (res.ok) {
-        setProducts(await res.json());
-      }
+      if (res.ok) setProducts(await res.json());
     } catch (error) {
       console.error("Failed to load products", error);
     }
@@ -81,14 +265,10 @@ function App() {
       const res = await fetch(`${API_BASE}/sync`, { method: "POST" });
       const data = await res.json();
       if (data.success) {
-        alert(data.message);
+        alert("Sincronização concluída com sucesso!");
         fetchProducts();
-      } else {
-        alert("Erro na sincronização: " + data.error);
-      }
-    } catch (err) {
-      alert("Falha de conexão.");
-    }
+      } else alert("Erro: " + data.error);
+    } catch (err) { alert("Falha de conexão."); }
     setSyncing(false);
   };
 
@@ -96,8 +276,7 @@ function App() {
     e.preventDefault();
     try {
       const res = await fetch(`${API_BASE}/products`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+        method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData)
       });
       if (res.ok) {
@@ -105,377 +284,235 @@ function App() {
         setFormData({ nome: "", categoria: "Importado", preco_custo: 0, preco_venda: 0, imagem_url: "", volumetria: "" });
         fetchProducts();
       }
-    } catch (err) {
-      alert("Erro ao criar produto.");
-    }
+    } catch (err) { alert("Erro ao criar produto."); }
   };
 
   const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`Tem certeza que deseja apagar o produto "${name}"? Esta ação é definitiva.`)) return;
-
+    if (!confirm(`Excluir o produto "${name}" permanentemente?`)) return;
     try {
       const res = await fetch(`${API_BASE}/products?id=${id}`, { method: "DELETE" });
-      if (res.ok) {
-        setProducts(products.filter(p => p.id !== id));
-      }
-    } catch (err) {
-      alert("Erro ao excluir.");
-    }
+      if (res.ok) setProducts(products.filter(p => p.id !== id));
+    } catch (err) { alert("Erro ao excluir."); }
   };
 
-   const handleUpdate = async (id: string, field: Partial<Product>) => {
-    // Prepare sanitized field (normalize typos like "Árables")
+  const handleUpdate = async (id: string, field: Partial<Product>) => {
     const sanitizedField = { ...field };
-    if (sanitizedField.categoria) {
-      sanitizedField.categoria = sanitizedField.categoria.replace(/Árables/gi, 'Arabe').replace(/Arables/gi, 'Arabe');
-    }
-
-    // Update local state immediately (Optimistically) for instant feedback
+    if (sanitizedField.categoria) sanitizedField.categoria = sanitizedField.categoria.replace(/Árables/gi, 'Arabe').replace(/Arables/gi, 'Arabe');
+    
     setProducts(prev => prev.map(p => p.id === id ? { ...p, ...sanitizedField } : p));
-
     try {
-      // Background update to the server
       await fetch(`${API_BASE}/products`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        method: 'PUT', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, ...sanitizedField })
       });
-      // No re-fetch needed if successful, state is already updated!
-    } catch (error) {
-      console.error("Error updating product:", error);
-      // If server update fails, re-fetch the correct state from the server
-      fetchProducts();
-    }
+    } catch (error) { fetchProducts(); }
   };
 
   const scanVolumes = async () => {
     const volumeRegex = /(\d+\s?ml|\d+\s?g|\d+\s?oz)/i;
     let count = 0;
-    
     for (const p of products) {
-        if (!p.volumetria) {
-            const match = p.nome.match(volumeRegex);
-            if (match) {
-                await handleUpdate(p.id, { volumetria: match[0].toUpperCase() });
-                count++;
-            }
+      if (!p.volumetria) {
+        const match = p.nome.match(volumeRegex);
+        if (match) {
+          await handleUpdate(p.id, { volumetria: match[0].toUpperCase() });
+          count++;
         }
+      }
     }
-    alert(`${count} produtos atualizados com volumetria encontrada nos nomes!`);
+    alert(`${count} produtos atualizados com volumetria encontrada!`);
   };
 
   const filtered = products.filter(p => p.nome.toLowerCase().includes(search.toLowerCase()));
 
   return (
-    <div className="min-h-screen p-8 max-w-[1600px] mx-auto bg-[#fafafa]">
+    <div className={`min-h-screen transition-colors duration-300 ${darkMode ? 'bg-[#0a0a0a] text-stone-100' : 'bg-stone-50 text-stone-900'}`}>
       
-      {/* MODAL CADASTRAR */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden border border-gray-100 animate-in fade-in zoom-in duration-200">
-            <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-              <h2 className="text-xl font-serif text-gray-900">Novo Perfume</h2>
-              <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600 transition-colors">
-                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+      {/* STICKY HEADER */}
+      <header className={`sticky top-0 z-40 backdrop-blur-md border-b transition-colors duration-300 ${darkMode ? 'bg-[#0a0a0a]/80 border-stone-800' : 'bg-white/80 border-stone-200'}`}>
+        <div className="max-w-[1600px] mx-auto px-4 md:px-8 py-4">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+            <div className="flex items-center gap-6 w-full md:w-auto">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-[#cfa858] rounded-xl flex items-center justify-center shadow-lg shadow-[#cfa858]/20">
+                  <Database className="text-white" size={20} />
+                </div>
+                <div>
+                  <h1 className="text-xl font-bold tracking-tight">Bigot Admin</h1>
+                  <div className="flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                    <span className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">Sistema Operacional</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="h-8 w-[1px] bg-stone-200 dark:bg-stone-800 hidden md:block"></div>
+              
+              <div className="relative flex-1 md:w-96">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" size={18} />
+                <input 
+                  type="text" 
+                  placeholder="Buscar perfume no catálogo..." 
+                  className={`w-full pl-10 pr-4 py-2.5 rounded-xl outline-none border transition-all text-sm ${darkMode ? 'bg-stone-900 border-stone-800 focus:border-[#cfa858]' : 'bg-stone-100 border-stone-200 focus:border-[#cfa858]'}`}
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 w-full md:w-auto">
+              <button 
+                onClick={() => setDarkMode(!darkMode)}
+                className={`p-2.5 rounded-xl border transition-all ${darkMode ? 'bg-stone-900 border-stone-800 text-stone-400 hover:text-white' : 'bg-stone-100 border-stone-200 text-stone-500 hover:text-black'}`}
+              >
+                {darkMode ? <Sun size={20} /> : <Moon size={20} />}
+              </button>
+              
+              <button 
+                onClick={scanVolumes}
+                className="flex items-center gap-2 px-4 py-2.5 bg-stone-500/10 text-stone-500 hover:bg-stone-500/20 rounded-xl transition-all font-bold text-xs uppercase tracking-widest"
+              >
+                <RefreshCw size={16} />
+                <span className="hidden sm:inline">Scan Volume</span>
+              </button>
+
+              <button 
+                onClick={() => setShowModal(true)}
+                className="flex items-center gap-2 px-6 py-2.5 bg-stone-900 dark:bg-white text-white dark:text-black rounded-xl font-black text-xs uppercase tracking-[0.15em] hover:scale-105 active:scale-95 transition-all shadow-xl"
+              >
+                <Plus size={18} />
+                <span className="hidden sm:inline">Cadastrar</span>
+              </button>
+
+              <button 
+                onClick={handleSync} 
+                disabled={syncing}
+                className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-black text-xs uppercase tracking-[0.15em] transition-all shadow-xl shadow-[#cfa858]/10 ${syncing ? 'bg-stone-300 text-stone-500 cursor-not-allowed' : 'bg-[#cfa858] text-white hover:bg-black active:scale-95'}`}
+              >
+                <RefreshCw size={18} className={syncing ? 'animate-spin' : ''} />
+                <span className="hidden sm:inline">{syncing ? 'Sincronizando' : 'Sincronizar'}</span>
               </button>
             </div>
-            <form onSubmit={handleCreate} className="p-6 space-y-4">
+          </div>
+        </div>
+      </header>
+
+      {/* MAIN CONTENT */}
+      <main className="max-w-[1600px] mx-auto px-4 md:px-8 py-8">
+        
+        {/* STATS STRIP */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+           {[
+             { label: 'Total Itens', val: products.length, icon: Package, color: 'text-stone-400' },
+             { label: 'No Site', val: products.filter(p => p.publicar_no_site).length, icon: Globe, color: 'text-emerald-500' },
+             { label: 'Sem Estoque', val: products.filter(p => p.estoque === 0).length, icon: ShoppingCart, color: 'text-rose-500' },
+             { label: 'Erro Preço', val: products.filter(p => p.preco_venda === 0).length, icon: AlertCircle, color: 'text-amber-500' },
+           ].map((stat, i) => (
+             <div key={i} className={`p-4 rounded-2xl border flex items-center gap-4 ${darkMode ? 'bg-stone-900/40 border-stone-800' : 'bg-white border-stone-100'}`}>
+                <div className={`p-2.5 rounded-xl ${darkMode ? 'bg-stone-900' : 'bg-stone-50'} ${stat.color}`}>
+                  <stat.icon size={20} />
+                </div>
+                <div>
+                  <div className="text-[10px] font-black uppercase tracking-widest text-stone-400">{stat.label}</div>
+                  <div className="text-xl font-bold">{stat.val}</div>
+                </div>
+             </div>
+           ))}
+        </div>
+
+        {/* LISTING */}
+        <div className="space-y-4">
+          {loading ? (
+            <div className="py-24 text-center">
+               <RefreshCw className="mx-auto mb-4 text-stone-400 animate-spin" size={40} />
+               <p className="text-stone-400 font-medium tracking-widest uppercase text-xs">Acessando Banco de Dados...</p>
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="py-24 text-center bg-white dark:bg-stone-900 rounded-3xl border border-dashed border-stone-200 dark:border-stone-800">
+               <Package className="mx-auto mb-4 text-stone-200 dark:text-stone-800" size={60} />
+               <p className="text-stone-400 font-medium tracking-widest uppercase text-xs">Nenhum perfume encontrado sob este critério.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-5">
+              {filtered.map(prod => (
+                <ProductCard 
+                  key={prod.id} 
+                  product={prod} 
+                  onUpdate={handleUpdate} 
+                  onDelete={handleDelete} 
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      </main>
+
+      {/* REGISTRATION MODAL */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+          <div className={`rounded-3xl shadow-2xl max-w-2xl w-full overflow-hidden border animate-in fade-in zoom-in duration-200 ${darkMode ? 'bg-[#1a1a1a] border-stone-800' : 'bg-white border-stone-100'}`}>
+            <div className="p-8 border-b border-stone-100 dark:border-stone-800 flex justify-between items-center">
               <div>
-                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Nome do Produto</label>
-                <input required type="text" className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-[#cfa858] transition-all" value={formData.nome} onChange={e => setFormData({...formData, nome: e.target.value})} placeholder="Ex: Bleu de Chanel Parfum" />
+                <h2 className="text-2xl font-bold tracking-tight">Novo Perfume</h2>
+                <p className="text-xs text-stone-400 font-medium uppercase tracking-[0.2em] mt-1">Cadastro Manual de Inventário</p>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                   <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Volumetria</label>
-                   <input type="text" className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-[#cfa858] transition-all mb-1" value={formData.volumetria} onChange={e => setFormData({...formData, volumetria: e.target.value})} placeholder="Ex: 100ML" />
-                   <div className="flex flex-wrap gap-1">
-                     {COMMON_VOLUMES.map(v => (
-                       <button 
-                         key={v}
-                         type="button"
-                         onClick={() => setFormData({...formData, volumetria: v})}
-                         className={`text-[8px] px-1.5 py-0.5 rounded border transition-all ${
-                          formData.volumetria === v ? 'bg-[#cfa858] text-white border-[#cfa858]' : 'bg-white text-gray-400 border-gray-100 hover:border-gray-200'
-                         }`}
-                       >
-                         {v}
-                       </button>
-                     ))}
-                   </div>
-                </div>
-                <div>
-                   <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Preço Custo (Sua Referência)</label>
-                   <input type="number" step="0.01" className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-[#cfa858] transition-all font-mono" value={formData.preco_custo} onChange={e => setFormData({...formData, preco_custo: parseFloat(e.target.value)})} />
-                </div>
+              <button onClick={() => setShowModal(false)} className="p-2 rounded-xl hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors">
+                <XCircle size={24} className="text-stone-400" />
+              </button>
+            </div>
+            
+            <form onSubmit={handleCreate} className="p-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="md:col-span-2">
+                <label className="block text-xs font-black text-stone-400 uppercase tracking-widest mb-2">Designação do Produto</label>
+                <input required type="text" className={`w-full px-5 py-3 rounded-2xl outline-none border transition-all ${darkMode ? 'bg-stone-900 border-stone-800 focus:border-[#cfa858]' : 'bg-stone-50 border-stone-200 focus:border-[#cfa858]'}`} value={formData.nome} onChange={e => setFormData({...formData, nome: e.target.value})} placeholder="Armaf Club de Nuit Intense Man" />
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="col-span-2">
-                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Categorias (Selecione uma ou mais)</label>
-                  <div className="flex flex-wrap gap-2 p-3 bg-gray-50 border border-gray-200 rounded-lg">
-                    {AVAILABLE_CATEGORIES.map(cat => (
-                      <label key={cat.id} className="flex items-center gap-2 cursor-pointer group bg-white px-3 py-1.5 rounded border border-gray-100 hover:border-[#cfa858] transition-all">
-                        <input 
-                          type="checkbox" 
-                          className="w-4 h-4 rounded border-gray-300 text-[#cfa858] focus:ring-[#cfa858]"
-                          checked={(formData.categoria || '').split(';').includes(cat.id)}
-                          onChange={() => toggleCategoryInForm(cat.id)}
-                        />
-                        <span className="text-xs font-semibold text-gray-600 group-hover:text-gray-900">{cat.label}</span>
-                      </label>
+              
+              <div>
+                <label className="block text-xs font-black text-stone-400 uppercase tracking-widest mb-2">Volumetria</label>
+                <div className="flex flex-col gap-3">
+                  <input type="text" className={`w-full px-5 py-3 rounded-2xl outline-none border transition-all ${darkMode ? 'bg-stone-900 border-stone-800 focus:border-[#cfa858]' : 'bg-stone-50 border-stone-200 focus:border-[#cfa858]'}`} value={formData.volumetria} onChange={e => setFormData({...formData, volumetria: e.target.value})} placeholder="100ML" />
+                  <div className="flex flex-wrap gap-2">
+                    {COMMON_VOLUMES.map(v => (
+                      <button key={v} type="button" onClick={() => setFormData({...formData, volumetria: v})} className={`text-[9px] px-3 py-1.5 rounded-lg border font-black transition-all ${formData.volumetria === v ? 'bg-[#cfa858] text-white border-[#cfa858]' : 'bg-transparent text-stone-400 border-stone-200 dark:border-stone-800 hover:border-[#cfa858]/50'}`}>{v}</button>
                     ))}
                   </div>
                 </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Preço Pix (Base)</label>
-                  <input required type="number" step="0.01" className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-[#cfa858]" value={formData.preco_venda} onChange={e => setFormData({...formData, preco_venda: parseFloat(e.target.value)})} />
+              </div>
+
+              <div>
+                <label className="block text-xs font-black text-stone-400 uppercase tracking-widest mb-2">Preço Pix (Venda Final)</label>
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400 font-bold">R$</span>
+                  <input required type="number" step="0.01" className={`w-full pl-12 pr-5 py-3 rounded-2xl outline-none border transition-all font-mono font-bold ${darkMode ? 'bg-stone-900 border-stone-800 focus:border-[#cfa858]' : 'bg-stone-50 border-stone-200 focus:border-[#cfa858]'}`} value={formData.preco_venda} onChange={e => setFormData({...formData, preco_venda: parseFloat(e.target.value)})} />
                 </div>
               </div>
-              <div>
-                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">URL da Imagem</label>
-                <input type="text" className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-[#cfa858]" value={formData.imagem_url} onChange={e => setFormData({...formData, imagem_url: e.target.value})} placeholder="https://..." />
+
+              <div className="md:col-span-2">
+                <label className="block text-xs font-black text-stone-400 uppercase tracking-widest mb-3">Categorias Estratégicas</label>
+                <div className={`p-4 rounded-2xl border flex flex-wrap gap-3 ${darkMode ? 'bg-stone-900 border-stone-800' : 'bg-stone-50 border-stone-200'}`}>
+                   {AVAILABLE_CATEGORIES.map(cat => (
+                     <label key={cat.id} className={`flex items-center gap-2 cursor-pointer transition-all px-4 py-2 rounded-xl border ${formData.categoria.includes(cat.id) ? 'bg-[#cfa858] border-[#cfa858] text-white shadow-lg shadow-[#cfa858]/20' : 'bg-white dark:bg-stone-950 border-stone-200 dark:border-stone-800 text-stone-400 hover:border-[#cfa858]/30'}`}>
+                        <input type="checkbox" className="sr-only" checked={formData.categoria.includes(cat.id)} onChange={() => {
+                          const current = formData.categoria.split(';').filter(Boolean);
+                          const next = current.includes(cat.id) ? current.filter(c => c !== cat.id) : [...current, cat.id];
+                          setFormData({...formData, categoria: next.join(';')});
+                        }} />
+                        <span className="text-[10px] font-black uppercase tracking-widest">{cat.label}</span>
+                        {formData.categoria.includes(cat.id) && <CheckCircle2 size={12} />}
+                     </label>
+                   ))}
+                </div>
               </div>
-              <div className="pt-4">
-                <button type="submit" className="w-full py-3 bg-[#cfa858] text-[#1a1a1a] font-bold rounded-lg hover:bg-black hover:text-white transition-all shadow-lg shadow-[#cfa858]/20">
-                  Cadastrar Produto
+
+              <div className="md:col-span-2 pt-4">
+                <button type="submit" className="w-full py-4 bg-[#cfa858] text-white font-black uppercase tracking-[0.2em] rounded-2xl hover:bg-stone-900 dark:hover:bg-white dark:hover:text-black transition-all shadow-xl shadow-[#cfa858]/20 active:scale-[0.98]">
+                  Confirmar Cadastro
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
-
-      {/* HEADER */}
-      <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 pb-6 border-b border-gray-200 gap-4">
-        <div>
-          <h1 className="text-3xl font-serif text-gray-900 tracking-tight">Painel Executivo: Bigot</h1>
-          <p className="text-sm text-gray-500 mt-1 font-light">Gestão de catálogo e vitrine em tempo real.</p>
-        </div>
-        
-        <div className="flex items-center gap-4">
-          <button 
-            onClick={scanVolumes}
-            className="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-all font-bold text-sm"
-          >
-            Scan Volumetria
-          </button>
-          <button 
-            onClick={() => setShowModal(true)}
-            className="px-5 py-2.5 rounded bg-white border border-gray-200 text-gray-700 text-sm uppercase tracking-widest font-semibold hover:bg-gray-50 transition-all shadow-sm"
-          >
-            + Novo Produto
-          </button>
-          <button 
-            onClick={handleSync} 
-            disabled={syncing}
-            className={`px-5 py-2.5 rounded shadow-sm text-sm uppercase tracking-widest font-semibold transition-all ${syncing ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-[#1a1a1a] text-[#cfa858] hover:bg-[#cfa858] hover:text-[#1a1a1a] shadow-lg shadow-[#cfa858]/20 hover:-translate-y-0.5'}`}
-          >
-            {syncing ? 'Sincronizando...' : '⟳ Sincronizar Vendizap'}
-          </button>
-        </div>
-      </header>
-
-      {/* FILTER BAR */}
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-8 flex items-center justify-between">
-         <div className="relative w-full max-w-md">
-           <svg className="w-5 h-5 absolute left-3 top-2.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-           <input 
-             type="text" 
-             placeholder="Buscar perfume pelo nome..." 
-             className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-[#cfa858]/50 focus:border-[#cfa858] bg-gray-50/50 text-sm"
-             value={search}
-             onChange={e => setSearch(e.target.value)}
-           />
-         </div>
-         <div className="text-xs text-gray-400 font-medium">
-            {filtered.length} {filtered.length === 1 ? 'Produto' : 'Produtos'} listados
-         </div>
-      </div>
-
-      {/* DATA TABLE */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-gray-50/80 text-[10px] uppercase tracking-widest text-gray-500 border-b border-gray-200">
-                <th className="py-4 px-6 font-semibold">Produto</th>
-                <th className="py-4 px-6 font-semibold">Dados Técnicos</th>
-                <th className="py-4 px-6 font-semibold">Preço Pix</th>
-                <th className="py-4 px-6 font-semibold text-center">Site</th>
-                <th className="py-4 px-6 font-semibold text-center">Ação</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 text-sm bg-white">
-              {loading ? (
-                <tr><td colSpan={5} className="py-12 text-center text-gray-400 italic">Carregando catálogo...</td></tr>
-              ) : filtered.length === 0 ? (
-                <tr><td colSpan={5} className="py-12 text-center text-gray-400 font-light">Nenhum produto encontrado.</td></tr>
-              ) : (
-                filtered.map(prod => (
-                  <tr key={prod.id} className="hover:bg-gray-50/40 transition-colors">
-                    
-                    <td className="py-4 px-6">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-gray-50 rounded-lg overflow-hidden border border-gray-100 shrink-0 flex items-center justify-center relative group">
-                           {prod.imagem_url ? (
-                             <img src={prod.imagem_url} alt={prod.nome} className="w-full h-full object-cover mix-blend-multiply transition group-hover:scale-110" />
-                           ) : (
-                             <span className="text-[10px] text-gray-400">N/A</span>
-                           )}
-                           <div className="absolute top-0 left-0 text-[8px] bg-black/60 text-white px-1 leading-tight rounded-br">
-                              {(prod as any).origem === 'MANUAL' ? 'Manual' : 'Zap'}
-                           </div>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <input 
-                            title="Editar Nome do Produto"
-                            className="font-semibold text-gray-900 bg-transparent border-b border-transparent hover:border-gray-200 focus:border-[#cfa858] outline-none w-full max-w-[280px] leading-tight transition-all truncate"
-                            defaultValue={prod.nome}
-                            onBlur={(e) => {
-                              if (e.target.value.trim() !== prod.nome) {
-                                handleUpdate(prod.id, { nome: e.target.value.trim() });
-                              }
-                            }}
-                          />
-                          <div className="mt-3">
-                            <label className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-2 block">Categorias</label>
-                            <div className="flex flex-wrap gap-1.5">
-                              {AVAILABLE_CATEGORIES.map(cat => (
-                                <button
-                                  key={cat.id}
-                                  onClick={() => {
-                                    const currentCats = (prod.categoria || '').split(';').filter(Boolean).map(c => c.trim());
-                                    const cleanedCats = currentCats.map(c => (c.toLowerCase().includes('arable') ? 'Arabe' : c));
-                                    const filteredCats = cleanedCats.filter(c => AVAILABLE_CATEGORIES.some(ac => ac.id === c) || c === cat.id);
-                                    
-                                    const newCats = filteredCats.includes(cat.id)
-                                      ? filteredCats.filter(c => c !== cat.id)
-                                      : [...filteredCats, cat.id];
-                                    
-                                    handleUpdate(prod.id, { categoria: [...new Set(newCats)].join(';') });
-                                  }}
-                                  className={`text-[9px] px-2 py-1 rounded font-bold uppercase tracking-wider transition-all border ${
-                                    (prod.categoria || '').split(';').some(c => c.trim() === cat.id)
-                                      ? 'bg-[#cfa858] text-[#1a1a1a] border-[#cfa858] shadow-sm'
-                                      : 'bg-white text-gray-300 border-gray-100 hover:border-gray-200'
-                                  }`}
-                                >
-                                  {cat.label}
-                                </button>
-                              ))}
-                            </div>
-                            
-                            <div className="flex items-center gap-3 mt-3 pt-2 border-t border-gray-50">
-                               <div className="flex items-center gap-1.5">
-                                 <span className="text-gray-300 text-[9px] font-bold uppercase">Gênero:</span>
-                                 <select
-                                   className="text-[9px] text-gray-600 font-bold uppercase bg-gray-50 hover:bg-gray-100 rounded px-2 py-0.5 outline-none transition-colors"
-                                   value={prod.classificacao || 'Unissex'}
-                                   onChange={(e) => handleUpdate(prod.id, { classificacao: e.target.value })}
-                                 >
-                                   <option value="Unissex">UNISSEX</option>
-                                   <option value="Masculino">MASCULINO</option>
-                                   <option value="Feminino">FEMININO</option>
-                                 </select>
-                               </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-
-                    <td className="py-4 px-6">
-                      <div className="flex flex-col gap-1.5">
-                         <div className="flex items-center gap-1.5">
-                            <span className="text-gray-400 text-[10px] uppercase font-bold">Volume:</span>
-                            <input 
-                              title="Volumetria"
-                              className="font-mono text-gray-600 font-semibold bg-gray-100/50 px-2 py-0.5 rounded border border-transparent hover:border-gray-200 focus:border-[#cfa858] outline-none w-20"
-                              value={prod.volumetria || ''}
-                              onChange={(e) => handleUpdate(prod.id, { volumetria: e.target.value })}
-                              placeholder="100ML"
-                            />
-                         </div>
-                         <div className="flex flex-wrap gap-1 mb-2">
-                           {COMMON_VOLUMES.map(v => (
-                             <button
-                               key={v}
-                               onClick={() => handleUpdate(prod.id, { volumetria: v })}
-                               className={`text-[8px] px-1 py-0.5 rounded border transition-all ${
-                                prod.volumetria === v ? 'bg-[#cfa858] text-white border-[#cfa858]' : 'bg-white text-gray-300 border-gray-50 hover:border-gray-100'
-                               }`}
-                             >
-                               {v}
-                             </button>
-                           ))}
-                         </div>
-                         <div className="flex items-center gap-1.5">
-                            <span className="text-gray-400 text-[10px] uppercase font-bold">Custo:</span>
-                            <span className="font-mono text-gray-600 font-semibold">R$ {prod.preco_custo.toFixed(2)}</span>
-                         </div>
-                         <div className="flex items-center gap-1.5">
-                            <span className="text-gray-400 text-[10px] uppercase font-bold">Estoque:</span>
-                            <input 
-                              title="Estoque"
-                              type="number"
-                              className="font-mono text-gray-600 font-semibold bg-transparent border-b border-transparent hover:border-gray-200 focus:border-[#cfa858] outline-none w-12"
-                              defaultValue={prod.estoque}
-                              onBlur={(e) => handleUpdate(prod.id, { estoque: parseInt(e.target.value) })}
-                            />
-                         </div>
-                      </div>
-                    </td>
-
-                    <td className="py-4 px-6">
-                      <div className="inline-flex items-center bg-gray-50 border border-gray-200 rounded px-2 py-1 shadow-inner focus-within:border-[#cfa858] transition-all">
-                        <span className="text-gray-400 text-xs font-medium mr-1">R$</span>
-                        <input
-                           type="number"
-                           step="0.01"
-                           className="w-20 bg-transparent font-bold text-gray-900 outline-none text-sm"
-                           value={prod.preco_venda}
-                           onChange={e => handleUpdate(prod.id, { preco_venda: parseFloat(e.target.value) || 0 })}
-                        />
-                      </div>
-                    </td>
-
-                    <td className="py-4 px-6">
-                      <div className="flex flex-col items-center gap-1">
-                        <label className="flex items-center cursor-pointer group">
-                          <input
-                            type="checkbox"
-                            className="sr-only"
-                            checked={prod.publicar_no_site}
-                            onChange={(e) => handleUpdate(prod.id, { publicar_no_site: e.target.checked })}
-                          />
-                          <div className={`w-10 h-5 rounded-full transition relative ${prod.publicar_no_site ? 'bg-[#cfa858]' : 'bg-gray-200 group-hover:bg-gray-300'}`}>
-                             <div className={`w-4 h-4 bg-white rounded-full absolute top-[2px] shadow-sm transform transition-all ${prod.publicar_no_site ? 'left-[22px]' : 'left-[2px]'}`}></div>
-                          </div>
-                        </label>
-                        <span className={`text-[8px] font-black tracking-tighter ${prod.publicar_no_site ? 'text-[#cfa858]' : 'text-gray-400'}`}>
-                          {prod.publicar_no_site ? 'ATIVO' : 'OFF'}
-                        </span>
-                      </div>
-                    </td>
-
-                    <td className="py-4 px-6 text-center">
-                      <button 
-                        onClick={() => handleDelete(prod.id, prod.nome)}
-                        className="w-8 h-8 rounded-full border border-gray-100 text-gray-300 hover:border-red-100 hover:text-red-500 hover:bg-red-50 transition-all flex items-center justify-center group"
-                      >
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                      </button>
-                    </td>
-
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
     </div>
-  )
+  );
 }
-
-export default App
