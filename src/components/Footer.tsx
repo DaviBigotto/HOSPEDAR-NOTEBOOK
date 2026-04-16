@@ -30,7 +30,7 @@ export default function Footer() {
             <ul className="space-y-4 text-sm font-light">
               <li className="flex items-center gap-3">
                 <span className="w-8 h-8 rounded border border-stone-800 flex items-center justify-center text-[#d4af37]">W</span>
-                <a href="#" className="hover:text-[#d4af37] transition-colors">(11) 99999-9999</a>
+                <a href="https://wa.me/5511953746027" target="_blank" rel="noreferrer" className="hover:text-[#d4af37] transition-colors">(11) 953746027</a>
               </li>
               <li className="flex items-center gap-3">
                 <span className="w-8 h-8 rounded border border-stone-800 flex items-center justify-center text-[#d4af37]">Ig</span>
