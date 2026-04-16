@@ -32,7 +32,7 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { nome, categoria, preco_custo, preco_venda, imagem_url } = body;
+    const { nome, categoria, preco_custo, preco_venda, imagem_url, volumetria } = body;
 
     if (!nome || !categoria) {
       return NextResponse.json({ error: 'Nome and Categoria are required' }, { status: 400 });
@@ -46,6 +46,7 @@ export async function POST(req: Request) {
         preco_custo: parseFloat(preco_custo) || 0,
         preco_venda: parseFloat(preco_venda) || 0,
         imagem_url: imagem_url || null,
+        volumetria: volumetria || null,
         origem: "MANUAL",
         publicar_no_site: false,
         disponivel: true
@@ -62,7 +63,7 @@ export async function POST(req: Request) {
 export async function PUT(req: Request) {
   try {
     const body = await req.json();
-    const { id, preco_venda, publicar_no_site, nome, categoria, classificacao, notas_olfativas, familia_olfativa, projecao, fixacao, ocasiao } = body;
+    const { id, preco_venda, publicar_no_site, nome, categoria, classificacao, notas_olfativas, familia_olfativa, projecao, fixacao, ocasiao, volumetria } = body;
 
     if (!id) {
       return NextResponse.json({ error: 'Product ID is required' }, { status: 400 });
@@ -81,6 +82,7 @@ export async function PUT(req: Request) {
         ...(projecao !== undefined && { projecao: projecao ? String(projecao) : null }),
         ...(fixacao !== undefined && { fixacao: fixacao ? String(fixacao) : null }),
         ...(ocasiao !== undefined && { ocasiao: ocasiao ? String(ocasiao) : null }),
+        ...(volumetria !== undefined && { volumetria: volumetria ? String(volumetria) : null }),
       }
     });
 

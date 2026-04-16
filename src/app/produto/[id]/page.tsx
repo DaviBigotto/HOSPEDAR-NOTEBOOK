@@ -36,10 +36,9 @@ export default async function ProdutoPage({ params }: { params: Promise<{ id: st
   };
 
   // Helper to split name into Parts: [Brand/Cat, Name, Volume]
-  const parseProductName = (fullName: string) => {
+  const parseProductName = (fullName: string, manualVolume: string | null) => {
     const volumeRegex = /(\d+\s?ml|\d+\s?g|\d+\s?oz)/i;
-    const volumeMatch = fullName.match(volumeRegex);
-    const volume = volumeMatch ? volumeMatch[0] : '';
+    const extractedVolume = (fullName.match(volumeRegex) || [])[0] || '';
     let nameWithoutVolume = fullName.replace(volumeRegex, '').trim();
     
     // Clean up category/brand info
@@ -49,11 +48,11 @@ export default async function ProdutoPage({ params }: { params: Promise<{ id: st
     return {
       topLabel: brand.toUpperCase(),
       mainName: formatTitle(nameWithoutVolume),
-      bottomLabel: volume.toUpperCase()
+      volume: (manualVolume || extractedVolume).toUpperCase()
     };
   };
 
-  const { topLabel, mainName, bottomLabel } = parseProductName(product.nome);
+  const { topLabel, mainName, volume } = parseProductName(product.nome, product.volumetria);
 
   return (
     <div className="min-h-screen bg-[#fafafa]">
@@ -107,10 +106,17 @@ export default async function ProdutoPage({ params }: { params: Promise<{ id: st
           {/* Produto Info */}
           <div className="w-full lg:w-1/2 flex flex-col pt-4">
             <div className="border-b border-stone-100 pb-10 mb-10 text-left">
-              {(product as any).classificacao && (
-                <p className="text-[10px] font-bold text-[#d4af37] mb-6 tracking-[0.3em] uppercase flex items-center gap-3">
-                  <span>{(product as any).classificacao}</span>
-                </p>
+               {(product as any).classificacao && (
+                <div className="flex items-center gap-4 mb-6">
+                  <p className="text-[10px] font-bold text-[#d4af37] tracking-[0.3em] uppercase">
+                    {(product as any).classificacao}
+                  </p>
+                  {volume && (
+                    <span className="text-[10px] font-black text-stone-900 bg-white px-2 py-1 rounded shadow-sm border border-stone-100 tracking-widest uppercase">
+                      {volume}
+                    </span>
+                  )}
+                </div>
               )}
               
               <h1 className="text-4xl md:text-5xl lg:text-7xl font-sans font-bold text-stone-900 mb-6 leading-[1.1] tracking-tighter">

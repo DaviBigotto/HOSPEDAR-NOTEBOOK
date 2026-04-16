@@ -22,16 +22,18 @@ export default function ProductCard({ product }: { product: any }) {
   };
 
   // Helper to split name into Parts
-  const parseProductName = (fullName: string) => {
+  const parseProductName = (fullName: string, manualVolume: string | null) => {
     const volumeRegex = /(\d+\s?ml|\d+\s?g|\d+\s?oz)/i;
     const nameWithoutVolume = fullName.replace(volumeRegex, '').trim();
+    const extractedVolume = (fullName.match(volumeRegex) || [])[0] || '';
 
     return {
       mainName: formatTitle(nameWithoutVolume),
+      volume: (manualVolume || extractedVolume).toUpperCase()
     };
   };
 
-  const { mainName } = parseProductName(product.nome);
+  const { mainName, volume } = parseProductName(product.nome, product.volumetria);
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -73,6 +75,9 @@ export default function ProductCard({ product }: { product: any }) {
             )}
             {product.estoque > 0 && product.estoque <= 3 && (
               <span className="bg-rose-900/80 text-white text-[7px] px-2 py-0.5 rounded-full tracking-[0.15em] uppercase font-bold shadow-sm opacity-90 font-sans">Últimos</span>
+            )}
+            {volume && (
+               <span className="bg-white/90 text-stone-900 text-[8px] px-2 py-0.5 rounded-sm tracking-widest uppercase font-black shadow-lg border border-stone-100 font-sans">{volume}</span>
             )}
           </div>
         </div>

@@ -17,6 +17,7 @@ interface Product {
   projecao: string | null;
   fixacao: string | null;
   ocasiao: string | null;
+  volumetria: string | null;
   updated_at: string;
 }
 
@@ -43,7 +44,8 @@ function App() {
     categoria: "Importado",
     preco_custo: 0,
     preco_venda: 0,
-    imagem_url: ""
+    imagem_url: "",
+    volumetria: ""
   });
 
   const toggleCategoryInForm = (catId: string) => {
@@ -98,7 +100,7 @@ function App() {
       });
       if (res.ok) {
         setShowModal(false);
-        setFormData({ nome: "", categoria: "Importado", preco_custo: 0, preco_venda: 0, imagem_url: "" });
+        setFormData({ nome: "", categoria: "Importado", preco_custo: 0, preco_venda: 0, imagem_url: "", volumetria: "" });
         fetchProducts();
       }
     } catch (err) {
@@ -119,7 +121,7 @@ function App() {
     }
   };
 
-  const handleUpdate = async (id: string, field: Partial<Product>) => {
+   const handleUpdate = async (id: string, field: Partial<Product>) => {
     // Prepare sanitized field (normalize typos like "Árables")
     const sanitizedField = { ...field };
     if (sanitizedField.categoria) {
@@ -144,6 +146,22 @@ function App() {
     }
   };
 
+  const scanVolumes = async () => {
+    const volumeRegex = /(\d+\s?ml|\d+\s?g|\d+\s?oz)/i;
+    let count = 0;
+    
+    for (const p of products) {
+        if (!p.volumetria) {
+            const match = p.nome.match(volumeRegex);
+            if (match) {
+                await handleUpdate(p.id, { volumetria: match[0].toUpperCase() });
+                count++;
+            }
+        }
+    }
+    alert(`${count} produtos atualizados com volumetria encontrada nos nomes!`);
+  };
+
   const filtered = products.filter(p => p.nome.toLowerCase().includes(search.toLowerCase()));
 
   return (
@@ -165,6 +183,16 @@ function App() {
                 <input required type="text" className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-[#cfa858] transition-all" value={formData.nome} onChange={e => setFormData({...formData, nome: e.target.value})} placeholder="Ex: Bleu de Chanel Parfum" />
               </div>
               <div className="grid grid-cols-2 gap-4">
+                <div>
+                   <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Volumetria</label>
+                   <input type="text" className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-[#cfa858] transition-all" value={formData.volumetria} onChange={e => setFormData({...formData, volumetria: e.target.value})} placeholder="Ex: 100ML" />
+                </div>
+                <div>
+                   <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Preço Custo (Sua Referência)</label>
+                   <input type="number" step="0.01" className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-[#cfa858] transition-all font-mono" value={formData.preco_custo} onChange={e => setFormData({...formData, preco_custo: parseFloat(e.target.value)})} />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2">
                   <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Categorias (Selecione uma ou mais)</label>
                   <div className="flex flex-wrap gap-2 p-3 bg-gray-50 border border-gray-200 rounded-lg">
@@ -180,16 +208,6 @@ function App() {
                       </label>
                     ))}
                   </div>
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Stock Inicial</label>
-                  <input type="number" className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-[#cfa858]" placeholder="0" />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Preço Custo</label>
-                  <input type="number" step="0.01" className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-[#cfa858]" value={formData.preco_custo} onChange={e => setFormData({...formData, preco_custo: parseFloat(e.target.value)})} />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Preço Pix (Base)</label>
@@ -218,6 +236,12 @@ function App() {
         </div>
         
         <div className="flex items-center gap-4">
+          <button 
+            onClick={scanVolumes}
+            className="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-all font-bold text-sm"
+          >
+            Scan Volumetria
+          </button>
           <button 
             onClick={() => setShowModal(true)}
             className="px-5 py-2.5 rounded bg-white border border-gray-200 text-gray-700 text-sm uppercase tracking-widest font-semibold hover:bg-gray-50 transition-all shadow-sm"
@@ -344,14 +368,34 @@ function App() {
                     </td>
 
                     <td className="py-4 px-6">
-                      <div className="flex flex-col gap-1">
+                      <div className="flex flex-col gap-1.5">
+                         <div className="flex items-center gap-1.5">
+                            <span className="text-gray-400 text-[10px] uppercase font-bold">Volume:</span>
+                            <input 
+                              title="Volumetria"
+                              className="font-mono text-gray-600 font-semibold bg-gray-100/50 px-2 py-0.5 rounded border border-transparent hover:border-gray-200 focus:border-[#cfa858] outline-none w-20"
+                              defaultValue={prod.volumetria || ''}
+                              onBlur={(e) => {
+                                if (e.target.value !== prod.volumetria) {
+                                  handleUpdate(prod.id, { volumetria: e.target.value });
+                                }
+                              }}
+                              placeholder="100ML"
+                            />
+                         </div>
                          <div className="flex items-center gap-1.5">
                             <span className="text-gray-400 text-[10px] uppercase font-bold">Custo:</span>
                             <span className="font-mono text-gray-600 font-semibold">R$ {prod.preco_custo.toFixed(2)}</span>
                          </div>
                          <div className="flex items-center gap-1.5">
                             <span className="text-gray-400 text-[10px] uppercase font-bold">Estoque:</span>
-                            <span className={`text-xs font-bold ${prod.estoque > 0 ? 'text-emerald-500' : 'text-red-500'}`}>{prod.estoque}</span>
+                            <input 
+                              title="Estoque"
+                              type="number"
+                              className="font-mono text-gray-600 font-semibold bg-transparent border-b border-transparent hover:border-gray-200 focus:border-[#cfa858] outline-none w-12"
+                              defaultValue={prod.estoque}
+                              onBlur={(e) => handleUpdate(prod.id, { estoque: parseInt(e.target.value) })}
+                            />
                          </div>
                       </div>
                     </td>
