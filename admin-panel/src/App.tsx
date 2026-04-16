@@ -31,6 +31,8 @@ const AVAILABLE_CATEGORIES = [
   { id: 'Cremes', label: 'Cremes' },
 ];
 
+const COMMON_VOLUMES = ['30ML', '50ML', '75ML', '100ML', '200ML'];
+
 function App() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -185,7 +187,21 @@ function App() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                    <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Volumetria</label>
-                   <input type="text" className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-[#cfa858] transition-all" value={formData.volumetria} onChange={e => setFormData({...formData, volumetria: e.target.value})} placeholder="Ex: 100ML" />
+                   <input type="text" className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-[#cfa858] transition-all mb-1" value={formData.volumetria} onChange={e => setFormData({...formData, volumetria: e.target.value})} placeholder="Ex: 100ML" />
+                   <div className="flex flex-wrap gap-1">
+                     {COMMON_VOLUMES.map(v => (
+                       <button 
+                         key={v}
+                         type="button"
+                         onClick={() => setFormData({...formData, volumetria: v})}
+                         className={`text-[8px] px-1.5 py-0.5 rounded border transition-all ${
+                          formData.volumetria === v ? 'bg-[#cfa858] text-white border-[#cfa858]' : 'bg-white text-gray-400 border-gray-100 hover:border-gray-200'
+                         }`}
+                       >
+                         {v}
+                       </button>
+                     ))}
+                   </div>
                 </div>
                 <div>
                    <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Preço Custo (Sua Referência)</label>
@@ -374,14 +390,23 @@ function App() {
                             <input 
                               title="Volumetria"
                               className="font-mono text-gray-600 font-semibold bg-gray-100/50 px-2 py-0.5 rounded border border-transparent hover:border-gray-200 focus:border-[#cfa858] outline-none w-20"
-                              defaultValue={prod.volumetria || ''}
-                              onBlur={(e) => {
-                                if (e.target.value !== prod.volumetria) {
-                                  handleUpdate(prod.id, { volumetria: e.target.value });
-                                }
-                              }}
+                              value={prod.volumetria || ''}
+                              onChange={(e) => handleUpdate(prod.id, { volumetria: e.target.value })}
                               placeholder="100ML"
                             />
+                         </div>
+                         <div className="flex flex-wrap gap-1 mb-2">
+                           {COMMON_VOLUMES.map(v => (
+                             <button
+                               key={v}
+                               onClick={() => handleUpdate(prod.id, { volumetria: v })}
+                               className={`text-[8px] px-1 py-0.5 rounded border transition-all ${
+                                prod.volumetria === v ? 'bg-[#cfa858] text-white border-[#cfa858]' : 'bg-white text-gray-300 border-gray-50 hover:border-gray-100'
+                               }`}
+                             >
+                               {v}
+                             </button>
+                           ))}
                          </div>
                          <div className="flex items-center gap-1.5">
                             <span className="text-gray-400 text-[10px] uppercase font-bold">Custo:</span>
