@@ -323,7 +323,12 @@ export default function App() {
     alert(`${count} produtos atualizados com volumetria encontrada!`);
   };
 
-  const filtered = products.filter(p => p.nome.toLowerCase().includes(search.toLowerCase()));
+  const filtered = products
+    .filter(p => p.nome.toLowerCase().includes(search.toLowerCase()))
+    .sort((a, b) => {
+      if (a.publicar_no_site === b.publicar_no_site) return 0;
+      return a.publicar_no_site ? -1 : 1;
+    });
 
   return (
     <div className={`min-h-screen transition-colors duration-300 ${darkMode ? 'bg-[#0a0a0a] text-stone-100' : 'bg-stone-50 text-stone-900'}`}>
