@@ -2,8 +2,8 @@ import { useState, useEffect, memo } from 'react'
 import { 
   Search, Plus, RefreshCw, Moon, Sun, 
   Trash2, Globe, Database, Package, 
-  ChevronRight, AlertCircle, ShoppingCart, 
-  Droplet, Tag, CheckCircle2, XCircle, LayoutGrid, List
+  AlertCircle, ShoppingCart, 
+  CheckCircle2, XCircle
 } from 'lucide-react'
 
 interface Product {
