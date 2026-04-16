@@ -25,8 +25,8 @@ const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:3000/api/adm
 const AVAILABLE_CATEGORIES = [
   { id: 'Importado', label: 'Importados' },
   { id: 'Tester', label: 'Testers' },
-  { id: 'Victoria Secret', label: 'Victoria\'s Secret' },
   { id: 'Arabe', label: 'Árabes' },
+  { id: 'Victoria', label: 'Victoria\'s Secret' },
   { id: 'Cremes', label: 'Cremes' },
 ];
 
@@ -47,11 +47,11 @@ function App() {
   });
 
   const toggleCategoryInForm = (catId: string) => {
-    const currentCats = formData.categoria.split(';').filter(Boolean);
+    const currentCats = (formData.categoria || '').split(';').filter(Boolean);
     const newCats = currentCats.includes(catId)
       ? currentCats.filter(c => c !== catId)
       : [...currentCats, catId];
-    setFormData({ ...formData, categoria: newCats.join(';') || catId });
+    setFormData({ ...formData, categoria: newCats.join(';') });
   };
 
   const fetchProducts = async () => {
@@ -155,18 +155,28 @@ function App() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Categorias</label>
-                  <div className="grid grid-cols-2 gap-2 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Categoria (Insert manual ou use botões)</label>
+                  <input 
+                    type="text" 
+                    className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-[#cfa858] mb-2" 
+                    value={formData.categoria} 
+                    onChange={e => setFormData({...formData, categoria: e.target.value})}
+                    placeholder="Ex: Importado;Arabe"
+                  />
+                  <div className="flex flex-wrap gap-1">
                     {AVAILABLE_CATEGORIES.map(cat => (
-                      <label key={cat.id} className="flex items-center gap-2 cursor-pointer group">
-                        <input 
-                          type="checkbox" 
-                          className="w-4 h-4 rounded border-gray-300 text-[#cfa858] focus:ring-[#cfa858]"
-                          checked={formData.categoria.split(';').includes(cat.id)}
-                          onChange={() => toggleCategoryInForm(cat.id)}
-                        />
-                        <span className="text-xs text-gray-600 group-hover:text-gray-900">{cat.label}</span>
-                      </label>
+                      <button
+                        key={cat.id}
+                        type="button"
+                        onClick={() => toggleCategoryInForm(cat.id)}
+                        className={`text-[9px] px-2 py-1 rounded border transition-all ${
+                          formData.categoria.split(';').includes(cat.id)
+                            ? 'bg-[#cfa858] text-[#1a1a1a] border-[#cfa858]'
+                            : 'bg-white text-gray-400 border-gray-200 hover:border-gray-300'
+                        }`}
+                      >
+                        {cat.label}
+                      </button>
                     ))}
                   </div>
                 </div>
@@ -285,36 +295,50 @@ function App() {
                               }
                             }}
                           />
-                          <div className="flex flex-wrap gap-1 items-center mt-1">
-                            {AVAILABLE_CATEGORIES.map(cat => (
-                              <button
-                                key={cat.id}
-                                onClick={() => {
-                                  const currentCats = (prod.categoria || '').split(';').filter(Boolean);
-                                  const newCats = currentCats.includes(cat.id)
-                                    ? currentCats.filter(c => c !== cat.id)
-                                    : [...currentCats, cat.id];
-                                  handleUpdate(prod.id, { categoria: newCats.join(';') || cat.id });
-                                }}
-                                className={`text-[8px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider transition-colors ${
-                                  (prod.categoria || '').split(';').includes(cat.id)
-                                    ? 'bg-[#cfa858]/20 text-[#b48c3b] border border-[#cfa858]/30'
-                                    : 'bg-gray-50 text-gray-300 border border-gray-100 hover:border-gray-300'
-                                }`}
+                          <div className="flex flex-col gap-1.5 mt-2">
+                            <input 
+                              title="Inserção Manual de Categoria"
+                              className="text-[10px] bg-gray-100/50 px-2 py-1 rounded border border-transparent hover:border-gray-200 focus:border-[#cfa858] outline-none w-full font-mono text-gray-600"
+                              defaultValue={prod.categoria}
+                              onBlur={(e) => {
+                                if (e.target.value !== prod.categoria) {
+                                  handleUpdate(prod.id, { categoria: e.target.value });
+                                }
+                              }}
+                            />
+                            <div className="flex flex-wrap gap-1">
+                              {AVAILABLE_CATEGORIES.map(cat => (
+                                <button
+                                  key={cat.id}
+                                  onClick={() => {
+                                    const currentCats = (prod.categoria || '').split(';').filter(Boolean);
+                                    const newCats = currentCats.includes(cat.id)
+                                      ? currentCats.filter(c => c !== cat.id)
+                                      : [...currentCats, cat.id];
+                                    handleUpdate(prod.id, { categoria: newCats.join(';') });
+                                  }}
+                                  className={`text-[8px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider transition-colors ${
+                                    (prod.categoria || '').split(';').includes(cat.id)
+                                      ? 'bg-[#cfa858]/20 text-[#b48c3b] border border-[#cfa858]/30'
+                                      : 'bg-white text-gray-300 border border-gray-100 hover:border-gray-300'
+                                  }`}
+                                >
+                                  {cat.id === 'Victoria' ? 'V. SECRET' : cat.label}
+                                </button>
+                              ))}
+                            </div>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className="text-gray-300 text-[9px] font-bold">GEN:</span>
+                              <select
+                                className="text-[9px] text-[#b48c3b] font-bold uppercase tracking-wider bg-transparent border-none outline-none cursor-pointer hover:bg-gray-100 rounded px-1"
+                                value={prod.classificacao || 'Unissex'}
+                                onChange={(e) => handleUpdate(prod.id, { classificacao: e.target.value })}
                               >
-                                {cat.id === 'Victoria Secret' ? 'V. SECRET' : cat.label}
-                              </button>
-                            ))}
-                            <span className="mx-1 text-gray-200">|</span>
-                            <select
-                              className="text-[9px] text-[#b48c3b] font-bold uppercase tracking-wider bg-transparent border-none outline-none cursor-pointer hover:bg-gray-100 rounded px-1"
-                              value={prod.classificacao || 'Unissex'}
-                              onChange={(e) => handleUpdate(prod.id, { classificacao: e.target.value })}
-                            >
-                              <option value="Unissex">UNISSEX</option>
-                              <option value="Masculino">MASCULINO</option>
-                              <option value="Feminino">FEMININO</option>
-                            </select>
+                                <option value="Unissex">UNISSEX</option>
+                                <option value="Masculino">MASCULINO</option>
+                                <option value="Feminino">FEMININO</option>
+                              </select>
+                            </div>
                           </div>
                         </div>
                       </div>
