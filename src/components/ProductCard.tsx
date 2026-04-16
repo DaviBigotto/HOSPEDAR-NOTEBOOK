@@ -81,18 +81,17 @@ export default function ProductCard({ product }: { product: any }) {
         
         {/* Content Area - Tightened Spacing */}
         <div className="flex flex-col flex-grow font-sans">
-          <div className="min-h-[36px] flex flex-col justify-start mb-0.5">
-            <h3 className="text-[15px] md:text-[16px] font-bold text-stone-900 line-clamp-2 leading-tight group-hover:text-[#d4af37] transition-colors duration-500 tracking-tight">
+          <div className="flex flex-col justify-start mb-2">
+            <h3 className="text-[15px] md:text-[16px] font-bold text-stone-900 leading-tight group-hover:text-[#d4af37] transition-colors duration-500 tracking-tight">
               {mainName}
             </h3>
           </div>
 
-          {/* Pricing Block - Dynamic Layout */}
           <div className="mt-auto pt-1.5 border-t border-stone-100/40 flex flex-col gap-0">
              {/* Pix Price & Label - Elegant Side by Side */}
              <div className="flex items-baseline gap-1.5">
                <span className="text-[18px] md:text-[20px] font-black text-[#b89142] tracking-tighter">
-                 R$ {(product.preco_venda * 0.95).toFixed(2).replace('.', ',')}
+                 R$ {product.preco_venda.toFixed(2).replace('.', ',')}
                </span>
                <span className="text-[9px] text-stone-400 font-medium lowercase">no Pix</span>
              </div>
@@ -100,16 +99,16 @@ export default function ProductCard({ product }: { product: any }) {
              {/* Secondary Pricing Wrapper */}
              <div className="flex flex-col -mt-0.5">
                <p className="text-[10px] md:text-[11px] font-bold text-stone-800 tracking-tight">
-                 ou R$ {product.preco_venda.toFixed(2).replace('.', ',')}
+                 ou R$ {(product.preco_venda / 0.95).toFixed(2).replace('.', ',')}
                </p>
                <p className="text-[9px] text-stone-400 font-medium uppercase tracking-widest opacity-70">
-                 12x de R$ {(product.preco_venda / 12).toFixed(2).replace('.', ',')} s/ juros
+                 12x de R$ {(product.preco_venda / 0.95 / 12).toFixed(2).replace('.', ',')} s/ juros
                </p>
              </div>
              
              {/* Old Price - Minimalist */}
              <p className="text-[9px] text-stone-200 line-through font-light tracking-wide italic mt-0.5">
-               R$ {(product.preco_venda / 0.90).toFixed(2).replace('.', ',')}
+               R$ {(product.preco_venda / 0.95 / 0.90).toFixed(2).replace('.', ',')}
              </p>
           </div>
         </div>

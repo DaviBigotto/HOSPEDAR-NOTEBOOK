@@ -7,8 +7,8 @@ export default function CartSidebar() {
   const { cart, isCartOpen, closeCart, updateQuantity, removeFromCart, cartTotal } = useCart();
 
   const checkoutMessage = () => {
-    const itemsText = cart.map(item => `• ${item.quantidade}x ${item.nome} (R$ ${item.preco.toFixed(2).replace('.', ',')})`).join('%0A');
-    const text = `Olá, gostaria de finalizar a compra dos seguintes itens:%0A%0A${itemsText}%0A%0A*Total Estimado: R$ ${cartTotal.toFixed(2).replace('.', ',')}*`;
+    const itemsText = cart.map(item => `• ${item.quantidade}x ${item.nome} (R$ ${item.preco.toFixed(2).replace('.', ',')} no Pix)`).join('%0A');
+    const text = `Olá, gostaria de finalizar a compra dos seguintes itens:%0A%0A${itemsText}%0A%0A*Total Estimado (Pix): R$ ${cartTotal.toFixed(2).replace('.', ',')}*%0A*Total Cartão/Parcelado: R$ ${(cartTotal / 0.95).toFixed(2).replace('.', ',')}*`;
     return `https://wa.me/5511953746027?text=${text}`;
   };
 

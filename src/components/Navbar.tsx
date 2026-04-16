@@ -39,6 +39,9 @@ export default function Navbar() {
               <Link href="/testers" className="text-gray-200 hover:text-gold transition-colors text-sm uppercase tracking-widest font-medium drop-shadow-md">
                 Testers
               </Link>
+              <Link href="/arabes" className="text-gray-200 hover:text-gold transition-colors text-sm uppercase tracking-widest font-medium drop-shadow-md">
+                Árabes
+              </Link>
               <Link href="/victoria-secret" className="text-gray-200 hover:text-gold transition-colors text-sm uppercase tracking-widest font-medium drop-shadow-md">
                 Victoria's Secret
               </Link>
@@ -107,6 +110,9 @@ export default function Navbar() {
             </Link>
             <Link href="/testers" onClick={() => setIsMobileMenuOpen(false)} className="text-gray-200 hover:text-gold transition-colors text-sm uppercase tracking-widest font-medium py-4 border-b border-stone-800/60 block">
               Testers
+            </Link>
+            <Link href="/arabes" onClick={() => setIsMobileMenuOpen(false)} className="text-gray-200 hover:text-gold transition-colors text-sm uppercase tracking-widest font-medium py-4 border-b border-stone-800/60 block">
+              Árabes
             </Link>
             <Link href="/victoria-secret" onClick={() => setIsMobileMenuOpen(false)} className="text-gray-200 hover:text-gold transition-colors text-sm uppercase tracking-widest font-medium py-4 border-b border-stone-800/60 block">
               Victoria's Secret

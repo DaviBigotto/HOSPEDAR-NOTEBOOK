@@ -18,7 +18,8 @@ export default async function ProdutoPage({ params }: { params: Promise<{ id: st
   }
 
   // Format currency
-  const preco = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(product.preco_venda);
+  const precoRegular = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(product.preco_venda / 0.95);
+  const precoPix = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(product.preco_venda);
 
   // Helper to capitalize words professionally
   const formatTitle = (str: string) => {
@@ -108,28 +109,26 @@ export default async function ProdutoPage({ params }: { params: Promise<{ id: st
               <div className="flex flex-col gap-2 mb-10">
                 {/* Old Price */}
                 <span className="text-sm text-stone-400 line-through font-light tracking-wide">
-                  R$ {(product.preco_venda / 0.90).toFixed(2).replace('.', ',')}
+                  R$ {(product.preco_venda / 0.95 / 0.90).toFixed(2).replace('.', ',')}
                 </span>
                 
                 <div className="flex flex-col md:flex-row md:items-baseline gap-4">
-                  {/* Main Price */}
+                  {/* Main Price (Pix) */}
                   <span className="text-4xl md:text-6xl font-semibold text-stone-900 tracking-tighter">
-                    {preco}
-                  </span>
-                </div>
-                
-                {/* Pix Price */}
-                <div className="mt-2 inline-flex items-center gap-2 bg-[#faf9f7] border border-[#d4af37]/20 px-4 py-2 rounded-sm w-fit">
-                  <span className="text-lg md:text-xl font-bold text-[#b89142] tracking-tight">
-                    R$ {(product.preco_venda * 0.95).toFixed(2).replace('.', ',')}
+                    {precoPix}
                   </span>
                   <span className="text-[10px] uppercase tracking-widest font-bold text-stone-500">no Pix</span>
                 </div>
                 
-                {/* Installments */}
-                <p className="text-xs text-stone-500 mt-4 font-medium uppercase tracking-widest">
-                  ou 12x de <span className="text-stone-900 font-bold">R$ {(product.preco_venda / 12).toFixed(2).replace('.', ',')}</span> sem juros
-                </p>
+                {/* Regular Price & Installments */}
+                <div className="mt-4 space-y-1">
+                  <p className="text-sm text-stone-500 font-medium uppercase tracking-widest">
+                    ou <span className="text-stone-900 font-bold">{precoRegular}</span> à vista
+                  </p>
+                  <p className="text-xs text-stone-500 font-medium uppercase tracking-widest">
+                    ou 12x de <span className="text-stone-900 font-bold">R$ {(product.preco_venda / 0.95 / 12).toFixed(2).replace('.', ',')}</span> sem juros
+                  </p>
+                </div>
               </div>
 
               <div className="mb-10">
