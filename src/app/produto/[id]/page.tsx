@@ -63,7 +63,18 @@ export default async function ProdutoPage({ params }: { params: Promise<{ id: st
         <nav className="flex text-[10px] text-stone-400 mb-6 md:mb-12 uppercase tracking-[0.2em] font-bold overflow-x-auto whitespace-nowrap pb-2 scrollbar-hide">
           <Link href="/" className="hover:text-[#d4af37] transition-colors">Início</Link>
           <span className="mx-2 md:mx-3 opacity-30">/</span>
-          <Link href="/importados" className="hover:text-[#d4af37] transition-colors">{product.categoria}</Link>
+          <Link 
+            href={
+              product.categoria.includes('Importado') ? '/importados' :
+              product.categoria.includes('Tester') ? '/testers' :
+              product.categoria.includes('Arabe') ? '/arabes' :
+              product.categoria.includes('Cremes') ? '/cremes' :
+              product.categoria.includes('Victoria Secret') ? '/victoria-secret' : '/importados'
+            } 
+            className="hover:text-[#d4af37] transition-colors"
+          >
+            {product.categoria.split(';')[0]}
+          </Link>
           <span className="mx-2 md:mx-3 opacity-30">/</span>
           <span className="text-stone-900 truncate max-w-[150px] md:max-w-[200px]">{product.nome}</span>
         </nav>
