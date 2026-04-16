@@ -74,10 +74,7 @@ export default function ProductCard({ product }: { product: any }) {
               <span className="bg-stone-800 text-[#d4af37] text-[7px] px-2 py-0.5 rounded-full tracking-[0.15em] uppercase font-bold shadow-sm opacity-90 font-sans">Oferta</span>
             )}
             {product.estoque > 0 && product.estoque <= 3 && (
-              <span className="bg-rose-900/80 text-white text-[7px] px-2 py-0.5 rounded-full tracking-[0.15em] uppercase font-bold shadow-sm opacity-90 font-sans">Últimos</span>
-            )}
-            {volume && (
-               <span className="bg-white/90 text-stone-900 text-[8px] px-2 py-0.5 rounded-sm tracking-widest uppercase font-black shadow-lg border border-stone-100 font-sans">{volume}</span>
+              <span className="bg-rose-900/80 text-white text-[7px] px-2 py-0.5 rounded-full tracking-[0.15em] uppercase font-bold shadow-sm opacity-90 font-sans">Últimos unidades</span>
             )}
           </div>
         </div>
@@ -85,8 +82,13 @@ export default function ProductCard({ product }: { product: any }) {
         {/* Content Area - Tightened Spacing */}
         <div className="flex flex-col flex-grow font-sans">
           <div className="flex flex-col justify-start mb-2">
-            <h3 className="text-[15px] md:text-[16px] font-bold text-stone-900 leading-tight group-hover:text-[#d4af37] transition-colors duration-500 tracking-tight">
-              {mainName}
+            <h3 className="text-[15px] md:text-[16px] font-bold text-stone-900 leading-tight group-hover:text-[#d4af37] transition-colors duration-500 tracking-tight flex items-baseline flex-wrap gap-x-1.5">
+              <span>{mainName}</span>
+              {volume && (
+                <span className="text-[11px] md:text-[12px] font-black text-[#b89142] tracking-widest opacity-90">
+                   • {volume}
+                </span>
+              )}
             </h3>
           </div>
 

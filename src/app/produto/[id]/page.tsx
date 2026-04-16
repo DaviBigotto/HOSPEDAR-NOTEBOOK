@@ -107,20 +107,18 @@ export default async function ProdutoPage({ params }: { params: Promise<{ id: st
           <div className="w-full lg:w-1/2 flex flex-col pt-4">
             <div className="border-b border-stone-100 pb-10 mb-10 text-left">
                {(product as any).classificacao && (
-                <div className="flex items-center gap-4 mb-6">
-                  <p className="text-[10px] font-bold text-[#d4af37] tracking-[0.3em] uppercase">
-                    {(product as any).classificacao}
-                  </p>
-                  {volume && (
-                    <span className="text-[10px] font-black text-stone-900 bg-white px-2 py-1 rounded shadow-sm border border-stone-100 tracking-widest uppercase">
-                      {volume}
-                    </span>
-                  )}
-                </div>
+                <p className="text-[10px] font-bold text-[#d4af37] mb-6 tracking-[0.3em] uppercase">
+                  {(product as any).classificacao}
+                </p>
               )}
               
-              <h1 className="text-4xl md:text-5xl lg:text-7xl font-sans font-bold text-stone-900 mb-6 leading-[1.1] tracking-tighter">
-                {mainName}
+               <h1 className="text-4xl md:text-5xl lg:text-7xl font-sans font-bold text-stone-900 mb-6 leading-[1.1] tracking-tighter flex items-baseline flex-wrap gap-x-3">
+                <span>{mainName}</span>
+                {volume && (
+                  <span className="text-xl md:text-2xl lg:text-3xl font-black text-[#d4af37] tracking-widest uppercase opacity-80">
+                    {volume}
+                  </span>
+                )}
               </h1>
               
               <div className="flex flex-col gap-2 mb-10">
