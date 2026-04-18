@@ -3,7 +3,7 @@ import {
   Search, Plus, RefreshCw, Moon, Sun, 
   Trash2, Globe, Database, Package, 
   AlertCircle, ShoppingCart, 
-  CheckCircle2, XCircle
+  CheckCircle2, XCircle, Upload, Camera
 } from 'lucide-react'
 
 interface Product {
@@ -38,6 +38,33 @@ const AVAILABLE_CATEGORIES = [
 ];
 
 const COMMON_VOLUMES = ['30ML', '50ML', '75ML', '100ML', '200ML'];
+
+const uploadImage = async (file: File) => {
+  const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "demo"; // Fallback to demo or prompt
+  const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
+
+  if (!uploadPreset) {
+    const manualUrl = prompt("Upload Preset não configurado. Por favor, cole a URL da imagem:");
+    return manualUrl;
+  }
+
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('upload_preset', uploadPreset);
+
+  try {
+    const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+      method: "POST",
+      body: formData
+    });
+    const data = await res.json();
+    return data.secure_url;
+  } catch (error) {
+    console.error("Upload failed", error);
+    alert("Falha no upload da imagem.");
+    return null;
+  }
+};
 
 // --- Sub-Components ---
 
@@ -84,13 +111,37 @@ const ProductCard = memo(({ product, onUpdate, onDelete }: {
         
         {/* IDENTITY ZONE (Left) */}
         <div className="lg:col-span-5 flex items-start gap-4">
-          <div className="relative w-20 h-24 md:w-24 md:h-28 bg-stone-50 dark:bg-stone-900 rounded-xl overflow-hidden border border-stone-100 dark:border-stone-800 shrink-0 flex items-center justify-center group/img">
+          <div className="relative w-24 h-28 md:w-32 md:h-36 bg-stone-50 dark:bg-stone-900 rounded-2xl overflow-hidden border border-stone-100 dark:border-stone-800 shrink-0 flex items-center justify-center group/img">
             {product.imagem_url ? (
               <img src={product.imagem_url} alt={product.nome} className="w-full h-full object-contain mix-blend-multiply dark:mix-blend-normal transition-transform duration-500 group-hover/img:scale-110 p-2" />
             ) : (
-              <div className="text-[10px] text-stone-300 uppercase tracking-widest font-bold">No Img</div>
+              <div className="flex flex-col items-center gap-2">
+                <Camera size={24} className="text-stone-300" />
+                <span className="text-[8px] text-stone-300 uppercase tracking-widest font-black">Sem Foto</span>
+              </div>
             )}
-            <div className="absolute top-0 left-0 bg-stone-800/80 text-white text-[8px] px-1.5 py-0.5 rounded-br-lg font-black tracking-tighter">
+            
+            {/* Upload Overlay */}
+            <label className="absolute inset-0 bg-black/40 backdrop-blur-[2px] opacity-0 group-hover/img:opacity-100 transition-all cursor-pointer flex flex-col items-center justify-center gap-2">
+              <input 
+                type="file" 
+                className="hidden" 
+                accept="image/*"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    const url = await uploadImage(file);
+                    if (url) onUpdate(product.id, { imagem_url: url });
+                  }
+                }}
+              />
+              <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center border border-white/30 text-white">
+                <Upload size={18} />
+              </div>
+              <span className="text-[9px] font-black text-white uppercase tracking-widest">Alterar</span>
+            </label>
+
+            <div className="absolute top-0 left-0 bg-stone-800/80 text-white text-[8px] px-1.5 py-0.5 rounded-br-lg font-black tracking-tighter z-10">
               {product.external_id ? 'VENDIZAP' : 'MANUAL'}
             </div>
           </div>
@@ -268,7 +319,10 @@ export default function App() {
         alert("Sincronização concluída com sucesso!");
         fetchProducts();
       } else alert("Erro: " + data.error);
-    } catch (err) { alert("Falha de conexão."); }
+    } catch (err) { 
+      console.error(err);
+      alert("Falha de conexão."); 
+    }
     setSyncing(false);
   };
 
@@ -284,7 +338,10 @@ export default function App() {
         setFormData({ nome: "", categoria: "Importado", preco_custo: 0, preco_venda: 0, imagem_url: "", volumetria: "" });
         fetchProducts();
       }
-    } catch (err) { alert("Erro ao criar produto."); }
+    } catch (err) { 
+      console.error(err);
+      alert("Erro ao criar produto."); 
+    }
   };
 
   const handleDelete = async (id: string, name: string) => {
@@ -292,7 +349,10 @@ export default function App() {
     try {
       const res = await fetch(`${API_BASE}/products?id=${id}`, { method: "DELETE" });
       if (res.ok) setProducts(products.filter(p => p.id !== id));
-    } catch (err) { alert("Erro ao excluir."); }
+    } catch (err) { 
+      console.error(err);
+      alert("Erro ao excluir."); 
+    }
   };
 
   const handleUpdate = async (id: string, field: Partial<Product>) => {
@@ -305,7 +365,10 @@ export default function App() {
         method: 'PUT', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, ...sanitizedField })
       });
-    } catch (error) { fetchProducts(); }
+    } catch (error) { 
+      console.error(error);
+      fetchProducts(); 
+    }
   };
 
   const scanVolumes = async () => {
@@ -489,6 +552,49 @@ export default function App() {
                 <div className="relative">
                   <span className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400 font-bold">R$</span>
                   <input required type="number" step="0.01" className={`w-full pl-12 pr-5 py-3 rounded-2xl outline-none border transition-all font-mono font-bold ${darkMode ? 'bg-stone-900 border-stone-800 focus:border-[#cfa858]' : 'bg-stone-50 border-stone-200 focus:border-[#cfa858]'}`} value={formData.preco_venda} onChange={e => setFormData({...formData, preco_venda: parseFloat(e.target.value)})} />
+                </div>
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-xs font-black text-stone-400 uppercase tracking-widest mb-2">Imagem de Vitrine</label>
+                <div className={`p-4 rounded-2xl border flex items-center gap-4 ${darkMode ? 'bg-stone-900 border-stone-800' : 'bg-stone-50 border-stone-200'}`}>
+                  {formData.imagem_url ? (
+                    <div className="relative w-16 h-16 rounded-xl overflow-hidden border border-stone-200 dark:border-stone-700">
+                      <img src={formData.imagem_url} className="w-full h-full object-cover" />
+                      <button 
+                        type="button"
+                        onClick={() => setFormData({...formData, imagem_url: ""})}
+                        className="absolute inset-0 bg-rose-500/80 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity text-white"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  ) : (
+                    <label className="w-16 h-16 rounded-xl border-2 border-dashed border-stone-300 dark:border-stone-700 flex items-center justify-center cursor-pointer hover:border-[#cfa858] transition-colors">
+                      <input 
+                        type="file" 
+                        className="hidden" 
+                        accept="image/*"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            const url = await uploadImage(file);
+                            if (url) setFormData({...formData, imagem_url: url});
+                          }
+                        }}
+                      />
+                      <Camera size={20} className="text-stone-300" />
+                    </label>
+                  )}
+                  <div className="flex-1">
+                    <input 
+                      type="text" 
+                      className={`w-full px-4 py-2 rounded-xl outline-none border text-xs ${darkMode ? 'bg-stone-950 border-stone-800' : 'bg-white border-stone-200'}`}
+                      placeholder="Ou cole a URL da imagem aqui..."
+                      value={formData.imagem_url}
+                      onChange={e => setFormData({...formData, imagem_url: e.target.value})}
+                    />
+                  </div>
                 </div>
               </div>
 

@@ -63,7 +63,7 @@ export async function POST(req: Request) {
 export async function PUT(req: Request) {
   try {
     const body = await req.json();
-    const { id, preco_venda, publicar_no_site, nome, categoria, classificacao, notas_olfativas, familia_olfativa, projecao, fixacao, ocasiao, volumetria } = body;
+    const { id, preco_venda, publicar_no_site, nome, categoria, classificacao, notas_olfativas, familia_olfativa, projecao, fixacao, ocasiao, volumetria, imagem_url } = body;
 
     if (!id) {
       return NextResponse.json({ error: 'Product ID is required' }, { status: 400 });
@@ -83,6 +83,7 @@ export async function PUT(req: Request) {
         ...(fixacao !== undefined && { fixacao: fixacao ? String(fixacao) : null }),
         ...(ocasiao !== undefined && { ocasiao: ocasiao ? String(ocasiao) : null }),
         ...(volumetria !== undefined && { volumetria: volumetria ? String(volumetria) : null }),
+        ...(imagem_url !== undefined && { imagem_url: imagem_url ? String(imagem_url) : null }),
       }
     });
 
