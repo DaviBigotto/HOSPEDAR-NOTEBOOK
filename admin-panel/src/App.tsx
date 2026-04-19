@@ -1,4 +1,4 @@
-import { useState, useEffect, memo, useCallback, useMemo } from 'react'
+import { useState, useEffect, memo, useMemo } from 'react'
 import { 
   Search, Plus, RefreshCw, Moon, Sun, 
   Trash2, Globe, Database, Package, 
@@ -93,14 +93,12 @@ const StatusToggle = memo(({ active, onChange }: { active: boolean, onChange: (v
 
 const getDirectImageUrl = (url: string) => {
   if (!url) return "";
-  // Fix ImgBB viewer links
+  // Se for um link do ImgBB (página), tentamos avisar ou converter
   if (url.includes('ibb.co/') && !url.includes('i.ibb.co/')) {
-    const parts = url.split('/');
-    const id = parts[parts.length - 1];
-    // This is a guess, but often ImgBB uses this pattern
-    // If it's not perfect, it's better than the page link
-    // Note: REAL direct link conversion usually needs their API or scraping, 
-    // but we can warn the user or try common patterns.
+    // Links de visualização do ImgBB geralmente terminam com o ID
+    // Ex: https://ibb.co/pLg0YpZ -> o ID é pLg0YpZ
+    // Mas o link direto exige o ID da imagem real que é diferente.
+    // Por enquanto, apenas retornamos a URL e deixamos o sistema avisar.
   }
   return url;
 };
@@ -158,8 +156,11 @@ const ProductCard = memo(({ product, onUpdate, onDelete }: {
 
               <button 
                 onClick={() => {
-                  const url = prompt("Cole a URL DIRETA da imagem (ex: deve terminar em .jpg, .png):", product.imagem_url || "");
-                  if (url !== null) onUpdate(product.id, { imagem_url: url });
+                  const rawUrl = prompt("Cole a URL DIRETA da imagem (ex: deve terminar em .jpg, .png):", product.imagem_url || "");
+                  if (rawUrl !== null) {
+                    const cleanUrl = getDirectImageUrl(rawUrl);
+                    onUpdate(product.id, { imagem_url: cleanUrl });
+                  }
                 }}
                 className="flex flex-col items-center gap-1 group/btn"
               >
@@ -317,6 +318,25 @@ export default function App() {
   const [formData, setFormData] = useState({
     nome: "", categoria: "Importado", preco_custo: 0, preco_venda: 0, imagem_url: "", volumetria: ""
   });
+
+  // Optimization States
+  const [displayLimit, setDisplayLimit] = useState(20);
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 500) {
+        setDisplayLimit(prev => prev + 20);
+      }
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   useEffect(() => {
     localStorage.setItem('admin-theme', darkMode ? 'dark' : 'light');
