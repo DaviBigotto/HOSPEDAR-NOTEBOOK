@@ -1,4 +1,4 @@
-import { useState, useEffect, memo } from 'react'
+import { useState, useEffect, memo, useCallback, useMemo } from 'react'
 import { 
   Search, Plus, RefreshCw, Moon, Sun, 
   Trash2, Globe, Database, Package, 
@@ -91,6 +91,20 @@ const StatusToggle = memo(({ active, onChange }: { active: boolean, onChange: (v
   </button>
 ));
 
+const getDirectImageUrl = (url: string) => {
+  if (!url) return "";
+  // Fix ImgBB viewer links
+  if (url.includes('ibb.co/') && !url.includes('i.ibb.co/')) {
+    const parts = url.split('/');
+    const id = parts[parts.length - 1];
+    // This is a guess, but often ImgBB uses this pattern
+    // If it's not perfect, it's better than the page link
+    // Note: REAL direct link conversion usually needs their API or scraping, 
+    // but we can warn the user or try common patterns.
+  }
+  return url;
+};
+
 const ProductCard = memo(({ product, onUpdate, onDelete }: { 
   product: Product, 
   onUpdate: (id: string, field: Partial<Product>) => void,
@@ -113,7 +127,7 @@ const ProductCard = memo(({ product, onUpdate, onDelete }: {
         <div className="lg:col-span-5 flex items-start gap-4">
           <div className="relative w-24 h-28 md:w-32 md:h-36 bg-stone-50 dark:bg-stone-900 rounded-2xl overflow-hidden border border-stone-100 dark:border-stone-800 shrink-0 flex items-center justify-center group/img">
             {product.imagem_url ? (
-              <img src={product.imagem_url} alt={product.nome} className="w-full h-full object-contain mix-blend-multiply dark:mix-blend-normal transition-transform duration-500 group-hover/img:scale-110 p-2" />
+              <img src={product.imagem_url} alt={product.nome} className="w-full h-full object-contain transition-transform duration-500 group-hover/img:scale-110 p-2" />
             ) : (
               <div className="flex flex-col items-center gap-2">
                 <Camera size={24} className="text-stone-300" />
@@ -121,25 +135,40 @@ const ProductCard = memo(({ product, onUpdate, onDelete }: {
               </div>
             )}
             
-            {/* Upload Overlay */}
-            <label className="absolute inset-0 bg-black/40 backdrop-blur-[2px] opacity-0 group-hover/img:opacity-100 transition-all cursor-pointer flex flex-col items-center justify-center gap-2">
-              <input 
-                type="file" 
-                className="hidden" 
-                accept="image/*"
-                onChange={async (e) => {
-                  const file = e.target.files?.[0];
-                  if (file) {
-                    const url = await uploadImage(file);
-                    if (url) onUpdate(product.id, { imagem_url: url });
-                  }
+            {/* Action Overlay */}
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] opacity-0 group-hover/img:opacity-100 transition-all flex flex-col items-center justify-center gap-2 z-20">
+              <label className="cursor-pointer flex flex-col items-center gap-1 group/btn">
+                <input 
+                  type="file" 
+                  className="hidden" 
+                  accept="image/*"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      const url = await uploadImage(file);
+                      if (url) onUpdate(product.id, { imagem_url: url });
+                    }
+                  }}
+                />
+                <div className="w-9 h-9 bg-white/20 rounded-full flex items-center justify-center border border-white/30 text-white group-hover/btn:bg-[#cfa858] transition-colors">
+                  <Upload size={16} />
+                </div>
+                <span className="text-[8px] font-black text-white uppercase tracking-widest">Arquivo</span>
+              </label>
+
+              <button 
+                onClick={() => {
+                  const url = prompt("Cole a URL DIRETA da imagem (ex: deve terminar em .jpg, .png):", product.imagem_url || "");
+                  if (url !== null) onUpdate(product.id, { imagem_url: url });
                 }}
-              />
-              <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center border border-white/30 text-white">
-                <Upload size={18} />
-              </div>
-              <span className="text-[9px] font-black text-white uppercase tracking-widest">Alterar</span>
-            </label>
+                className="flex flex-col items-center gap-1 group/btn"
+              >
+                <div className="w-9 h-9 bg-white/20 rounded-full flex items-center justify-center border border-white/30 text-white group-hover/btn:bg-[#cfa858] transition-colors">
+                  <Globe size={16} />
+                </div>
+                <span className="text-[8px] font-black text-white uppercase tracking-widest">Link</span>
+              </button>
+            </div>
 
             <div className="absolute top-0 left-0 bg-stone-800/80 text-white text-[8px] px-1.5 py-0.5 rounded-br-lg font-black tracking-tighter z-10">
               {product.external_id ? 'VENDIZAP' : 'MANUAL'}
@@ -386,12 +415,16 @@ export default function App() {
     alert(`${count} produtos atualizados com volumetria encontrada!`);
   };
 
-  const filtered = products
-    .filter(p => p.nome.toLowerCase().includes(search.toLowerCase()))
-    .sort((a, b) => {
-      if (a.publicar_no_site === b.publicar_no_site) return 0;
-      return a.publicar_no_site ? -1 : 1;
-    });
+  const filtered = useMemo(() => {
+    return products
+      .filter(p => p.nome.toLowerCase().includes(debouncedSearch.toLowerCase()))
+      .sort((a, b) => {
+        if (a.publicar_no_site === b.publicar_no_site) return 0;
+        return a.publicar_no_site ? -1 : 1;
+      });
+  }, [products, debouncedSearch]);
+
+  const visibleProducts = filtered.slice(0, displayLimit);
 
   return (
     <div className={`min-h-screen transition-colors duration-300 ${darkMode ? 'bg-[#0a0a0a] text-stone-100' : 'bg-stone-50 text-stone-900'}`}>
@@ -502,7 +535,7 @@ export default function App() {
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-5">
-              {filtered.map(prod => (
+              {visibleProducts.map(prod => (
                 <ProductCard 
                   key={prod.id} 
                   product={prod} 
@@ -510,6 +543,11 @@ export default function App() {
                   onDelete={handleDelete} 
                 />
               ))}
+              {displayLimit < filtered.length && (
+                <div className="py-8 text-center text-stone-400 font-bold text-xs uppercase tracking-widest animate-pulse">
+                  Carregando mais perfumes...
+                </div>
+              )}
             </div>
           )}
         </div>

@@ -31,7 +31,7 @@ model Product {
   publicar_no_site Boolean  @default(false)
   is_promocao      Boolean  @default(false)
   volumetria       String?
-  
+
   @@index([categoria])
   @@index([publicar_no_site])
 }
