@@ -23,6 +23,10 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: 'bigot-parfums.vercel.app',
+      },
+      {
+        protocol: 'https',
+        hostname: 'res.cloudinary.com',
       }
     ],
   },
